@@ -126,20 +126,6 @@ tr:hover td{background:#fafafa;}
         <div class="sc"><div class="l">今日互領</div><div class="n" id="ct">－</div></div>
         <div class="stat-card sc"><div class="l">本週累計</div><div class="n" id="cw">－</div></div>
       </div>
-      <!-- 開方日期選擇 -->
-      <div class="card" id="rx-date-card" style="padding:10px 14px;margin-bottom:8px;">
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-          <div style="display:flex;align-items:center;gap:8px;">
-            <span style="font-size:13px;font-weight:600;color:#374151;">開方日期</span>
-            <input type="date" class="inp" id="rx-date" style="width:auto;font-size:13px;font-weight:600;border-color:#185FA5;"/>
-          </div>
-          <div id="rx-date-warn" class="hide" style="display:flex;align-items:center;gap:6px;background:#FEF3C7;border:1px solid #fcd34d;border-radius:6px;padding:4px 10px;font-size:12px;color:#92400e;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            <span id="rx-date-warn-txt">開方日期非今日，請確認後再刷碼</span>
-          </div>
-          <button class="btn" style="font-size:11px;padding:3px 9px;margin-left:auto;" id="rx-today-btn">回今日</button>
-        </div>
-      </div>
       <div class="card">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
           <div style="width:40px;height:40px;background:#EFF6FF;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -182,7 +168,26 @@ tr:hover td{background:#fafafa;}
         </div>
       </div>
 
-      <!-- Unknown drug -->
+      <!-- Ctrl drug prescription date confirm -->
+      <div class="card hide" id="ctrl-date-card" style="border-color:#fcd34d;background:#FFFBEB;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div style="font-size:14px;font-weight:600;color:#92400e;">管制藥品－請選開方日期</div>
+          <span id="ctrl-date-level-badge" class="bdg bc1">管制</span>
+        </div>
+        <div style="font-size:12px;margin-bottom:12px;">
+          <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #fef3c7;"><span style="color:#6b7280;">病歷號</span><span class="mn" id="cd-pid"></span></div>
+          <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #fef3c7;"><span style="color:#6b7280;">領藥號</span><span class="mn" id="cd-dn"></span></div>
+          <div style="display:flex;justify-content:space-between;padding:4px 0;"><span style="color:#6b7280;">藥品</span><span style="font-weight:600;" id="cd-nm"></span></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+          <span style="font-size:13px;font-weight:600;color:#92400e;">開方日期</span>
+          <input type="date" class="inp" id="cd-date" style="width:auto;font-size:13px;font-weight:600;border-color:#fcd34d;"/>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn bp" style="flex:1;padding:8px;background:#92400e;border-color:#92400e;" id="cd-cfm">確認儲存</button>
+          <button class="btn" style="flex:1;padding:8px;" id="cd-cancel">取消</button>
+        </div>
+      </div>
       <div class="card hide" id="unk-card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
           <div style="font-size:14px;font-weight:600;">找不到藥品主檔</div>
@@ -267,7 +272,7 @@ tr:hover td{background:#fafafa;}
           <span class="bdg bc1">逐筆</span>
         </div>
         <div style="display:flex;gap:8px;">
-          <button class="btn" style="font-size:12px;color:#991b1b;border-color:#fca5a5;" id="ec1">匯出 Excel</button>
+          <button class="btn bp" style="font-size:12px;" id="ec1">匯出 Excel</button>
           <button class="btn" style="font-size:12px;color:#059669;border-color:#6ee7b7;" id="vc1">核對管理</button>
         </div>
       </div>
@@ -294,7 +299,7 @@ tr:hover td{background:#fafafa;}
           <span class="bdg bc3">逐筆</span>
         </div>
         <div style="display:flex;gap:8px;">
-          <button class="btn" style="font-size:12px;color:#92400e;border-color:#fcd34d;" id="ec3">匯出 Excel</button>
+          <button class="btn bp" style="font-size:12px;" id="ec3">匯出 Excel</button>
           <button class="btn" style="font-size:12px;color:#059669;border-color:#6ee7b7;" id="vc3">核對管理</button>
         </div>
       </div>
@@ -526,9 +531,8 @@ g("lb").onclick=login; g("pw").onkeydown=function(e){if(e.key==="Enter")login();
 g("lo").onclick=logout;
 g("ns").onclick=function(){tab("s");}; g("nr").onclick=function(){tab("r");}; g("np").onclick=function(){tab("p");}; g("na").onclick=function(){tab("a");}; g("nd").onclick=function(){tab("d");};
 g("bi").onkeydown=function(e){if(e.key==="Enter"){e.preventDefault();procBar(g("bi").value.trim());}};
-g("rx-date").onchange=function(){checkRxDate();};
-g("rx-today-btn").onclick=function(){g("rx-date").value=new Date().toISOString().slice(0,10);checkRxDate();};
 g("e-cfm").onclick=saveEmgRecord; g("e-cancel").onclick=function(){hi("emg-card");g("bi").value="";g("bi").focus();};
+g("cd-cfm").onclick=saveCtrlRecord; g("cd-cancel").onclick=function(){hi("ctrl-date-card");g("bi").value="";g("bi").focus();};
 g("unk-ok").onclick=function(){hi("unk-card");g("bi").value="";g("bi").focus();};
 g("rsb").onclick=loadRec;
 g("eg").onclick=expGen; g("ec1").onclick=function(){expCtrlSheet("c12");}; g("ec3").onclick=function(){expCtrlSheet("c3");};
@@ -660,20 +664,21 @@ window.goToCtrlVerify=async function(){
   },300);
 };
 async function login(){
-  var ei=g("ei").value.trim(),pw=g("pw").value||g("ei").value.trim(),lc=g("lc").value,er=g("le");
+  var ei=g("ei").value.trim(),pw=(g("pw").value||g("ei").value.trim()).toLowerCase(),lc=g("lc").value,er=g("le");
   er.classList.add("hide");
   if(!ei){er.textContent="請輸入員編";er.classList.remove("hide");return;}
-  var d=await sel("users","emp_id=eq."+encodeURIComponent(ei)+"&campus=eq."+lc+"&is_active=eq.true&select=*");
+  var d=await sel("users","emp_id=ilike."+encodeURIComponent(ei)+"&campus=eq."+lc+"&is_active=eq.true&select=*");
   if(!Array.isArray(d)||!d.length){er.textContent="員編或院區不正確";er.classList.remove("hide");return;}
   var u=d[0];
-  if(u.password_hash!==pw){er.textContent="密碼錯誤";er.classList.remove("hide");return;}
+  if((u.password_hash||"").toLowerCase()!==pw){er.textContent="密碼錯誤";er.classList.remove("hide");return;}
   CU=u; hi("ls"); sh("as");
   var cl=lc==="douliou"?"bdl":"bhw",lb=CL[lc];
   var roleLabel=ROLE_LABEL[u.role]||"一般藥師";
   g("hu").innerHTML=ei+" "+u.name+' <span class="bdg '+cl+'">'+lb+'</span> <span class="bdg bgn">'+roleLabel+'</span>';
   // Show tabs based on role
   if(u.role==="warehouse"||u.role==="admin"){sh("np");}
-  if(u.role==="admin"){sh("na");sh("nd");}
+  if(u.role==="warehouse"||u.role==="admin"){sh("nd");}
+  if(u.role==="admin"){sh("na");}
   tab("s"); loadCounts(); loadRecent();
   if(u.role==="admin"||u.role==="warehouse"){
     setTimeout(checkPending, 500);
@@ -686,7 +691,7 @@ function logout(){CU=null;sh("ls");hi("as");g("ei").value="";g("pw").value="";["
 async function changePwd(){
   var op=g("old-pwd").value,np=g("new-pwd").value,np2=g("new-pwd2").value,er=g("pwd-err");
   er.classList.add("hide");
-  if(op!==CU.password_hash){er.textContent="目前密碼不正確";er.classList.remove("hide");return;}
+  if((op||"").toLowerCase()!==(CU.password_hash||"").toLowerCase()){er.textContent="目前密碼不正確";er.classList.remove("hide");return;}
   if(!np||np.length<4){er.textContent="新密碼至少4位";er.classList.remove("hide");return;}
   if(np!==np2){er.textContent="兩次密碼不一致";er.classList.remove("hide");return;}
   await upd("users","id=eq."+CU.id,{password_hash:np});
@@ -704,8 +709,6 @@ function tab(t){
   if(t==="a"){loadUsers();}
   if(t==="d"){searchDrugMaster(false);loadPending();}
   if(t==="s"){
-    if(!g("rx-date").value) g("rx-date").value=new Date().toISOString().slice(0,10);
-    checkRxDate();
     setTimeout(function(){g("bi").focus();},100);
   }
 }
@@ -773,8 +776,35 @@ async function procBar(raw){
 
   PQ=qr; PD=drug;
   var pc=prefix==="A"?"douliou":prefix==="D"?"huwei":(CU.campus==="douliou"?"huwei":"douliou");
-  await saveRecord(qr,drug,pc,CU.campus);
+
+  // 管制藥品（管一二三）→ 跳出開方日期選擇
+  var cl=drug.ctrl_level;
+  if(cl==="1"||cl==="2"||cl==="3"||cl===1||cl===2||cl===3){
+    g("cd-pid").textContent=qr.pi;
+    g("cd-dn").textContent=qr.dn;
+    g("cd-nm").textContent=tc(drug.name);
+    g("cd-date").value=new Date().toISOString().slice(0,10);
+    var lvl=String(cl);
+    var badge=g("ctrl-date-level-badge");
+    badge.textContent="管"+lvl+"級";
+    badge.className="bdg "+(lvl==="3"?"bc3":"bc1");
+    window._pendingPc=pc;
+    sh("ctrl-date-card");
+    LK=false; return;
+  }
+
+  // 一般藥品 → 直接儲存，開方日期用當下日期
+  await saveRecord(qr,drug,pc,CU.campus,null);
   LK=false;
+}
+
+async function saveCtrlRecord(){
+  if(!PQ||!PD) return;
+  var rxDate=g("cd-date").value;
+  if(!rxDate){alert("請選擇開方日期");return;}
+  hi("ctrl-date-card");
+  var pc=window._pendingPc||CU.campus;
+  await saveRecord(PQ,PD,pc,CU.campus,rxDate);
 }
 
 async function saveEmgRecord(){
@@ -782,19 +812,34 @@ async function saveEmgRecord(){
   var pc=g("e-ps").value, dc=g("e-ds").value;
   hi("emg-card");
   if(!PD){
-    // Drug not found, save as pending
     await ins("pending_records",{patient_account:PQ.pa,patient_id:PQ.pi,dispense_no:PQ.dn,drug_code:PQ.dc,quantity:PQ.qt,qr_unit:PQ.qu,campus:dc,pharmacist_emp_id:CU.emp_id,note:"急診處方，藥品台大碼不在主檔"});
     showToast("急診暫存完成，待管理員更新主檔","ok");
     loadRecent(); return;
   }
-  await saveRecord(PQ,PD,pc,dc);
+  // 急診管制藥也需要跳開方日期
+  var cl=PD.ctrl_level;
+  if(cl==="1"||cl==="2"||cl==="3"||cl===1||cl===2||cl===3){
+    g("cd-pid").textContent=PQ.pi;
+    g("cd-dn").textContent=PQ.dn;
+    g("cd-nm").textContent=tc(PD.name);
+    g("cd-date").value=new Date().toISOString().slice(0,10);
+    var lvl=String(cl);
+    var badge=g("ctrl-date-level-badge");
+    badge.textContent="管"+lvl+"級";
+    badge.className="bdg "+(lvl==="3"?"bc3":"bc1");
+    window._pendingPc=pc; window._pendingDc=dc;
+    sh("ctrl-date-card");
+    return;
+  }
+  await saveRecord(PQ,PD,pc,dc,null);
 }
 
-async function saveRecord(qr,drug,pc,dc){
-  var rxDate=g("rx-date").value||new Date().toISOString().slice(0,10);
-  var r=await ins("dispensing_records",{patient_account:qr.pa,patient_id:qr.pi,dispense_no:qr.dn,drug_code:qr.dc,quantity:qr.qt,qr_unit:qr.qu,stock_code:drug.stock_code,drug_name:drug.name,ctrl_level:drug.ctrl_level,drug_unit:drug.unit,prescribe_campus:pc,dispense_campus:dc,pharmacist_emp_id:CU.emp_id,prescription_date:rxDate});
+async function saveRecord(qr,drug,pc,dc,rxDate){
+  var today=new Date().toISOString().slice(0,10);
+  var finalRxDate=rxDate||today;
+  var r=await ins("dispensing_records",{patient_account:qr.pa,patient_id:qr.pi,dispense_no:qr.dn,drug_code:qr.dc,quantity:qr.qt,qr_unit:qr.qu,stock_code:drug.stock_code,drug_name:drug.name,ctrl_level:drug.ctrl_level,drug_unit:drug.unit,prescribe_campus:pc,dispense_campus:dc,pharmacist_emp_id:CU.emp_id,prescription_date:finalRxDate});
   if(r.error){showToast("儲存失敗","err");return;}
-  showToast("已儲存："+drug.drug_code+" "+tc(drug.name)+"（開方日期："+rxDate+"）","ok");
+  showToast("已儲存："+drug.drug_code+" "+tc(drug.name),"ok");
   loadCounts(); loadRecent();
   autoConvertPending();
   setTimeout(function(){g("bi").focus();},100);
@@ -1269,13 +1314,37 @@ function excelImportUsers(){
     var rdr=new FileReader();
     rdr.onload=async function(e){
       var wb=XLSX.read(e.target.result,{type:"array"}),ws=wb.Sheets[wb.SheetNames[0]];
-      var rows=XLSX.utils.sheet_to_json(ws,{defval:""});
+      // 嘗試找到包含員編的工作表
+      var targetSheet=null;
+      for(var sn=0;sn<wb.SheetNames.length;sn++){
+        var s=wb.Sheets[wb.SheetNames[sn]];
+        var srows=XLSX.utils.sheet_to_json(s,{defval:"",header:1});
+        for(var ri=0;ri<Math.min(srows.length,5);ri++){
+          var rowStr=JSON.stringify(srows[ri]);
+          if(rowStr.includes("員編")||rowStr.includes("emp_id")){targetSheet={sheet:s,headerRow:ri};break;}
+        }
+        if(targetSheet) break;
+      }
+      if(!targetSheet){st.textContent="找不到員編欄位，請確認 Excel 格式";st.style.color="#dc2626";return;}
+      // 讀取資料，從標題行開始
+      var rawRows=XLSX.utils.sheet_to_json(targetSheet.sheet,{defval:"",header:1});
+      var headers=rawRows[targetSheet.headerRow];
+      var rows=rawRows.slice(targetSheet.headerRow+1).map(function(row){
+        var obj={};
+        headers.forEach(function(h,i){
+          var key=h!==null&&h!==undefined?String(h).trim():"";
+          if(key) obj[key]=row[i]!==undefined?row[i]:"";
+        });
+        return obj;
+      }).filter(function(r){
+        return Object.values(r).some(function(v){return String(v).trim()!=="";});
+      });
       var records=[],errors=[];
       rows.forEach(function(row,i){
         var ei=String(row["員編"]||row["emp_id"]||"").trim();
         var nm=String(row["姓名"]||row["name"]||"").trim();
         var cpRaw=String(row["院區"]||row["campus"]||"").trim();
-        var rlRaw=String(row["角色"]||row["身份別"]||row["身分別"]||row["role"]||"").trim();
+        var rlRaw=String(row["角色"]||row["身份別"]||row["身分別"]||row["權限"]||row["role"]||"").trim();
         if(!ei||!nm) return;
         var cp=CAMPUS_MAP[cpRaw],rl=ROLE_MAP[rlRaw]||"pharmacist";
         if(!cp){errors.push("第"+(i+1)+"行院區不正確："+cpRaw);return;}
