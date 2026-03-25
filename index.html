@@ -218,7 +218,7 @@ tr:hover td{background:#fafafa;}
         <span style="font-size:12px;color:#6b7280;margin-left:auto;" id="rc"></span>
       </div>
       <div class="card" style="padding:0;overflow-x:auto;">
-        <table style="min-width:620px;">
+        <table style="min-width:780px;">
           <thead><tr>
             <th>時間</th><th>病歷號</th><th>領藥號</th><th>台大碼</th><th>庫存碼</th><th>商品名</th><th>量</th><th>類別</th><th>開方</th><th>領藥</th><th>藥師</th><th>操作</th>
           </tr></thead>
@@ -968,9 +968,10 @@ async function loadRec(){
     var pb='<span class="bdg '+(r.prescribe_campus==="douliou"?"bdl":"bhw")+'">'+(r.prescribe_campus==="douliou"?"斗六":"虎尾")+'</span>';
     var db='<span class="bdg '+(r.dispense_campus==="douliou"?"bdl":"bhw")+'">'+(r.dispense_campus==="douliou"?"斗六":"虎尾")+'</span>';
     var delBtn=canDel?'<button class="btn" style="font-size:11px;padding:2px 7px;color:#dc2626;border-color:#fca5a5;" onclick="confirmDel(\''+r.id+'\',\''+r.drug_name.replace(/'/g,"&#39;")+'\')">刪除</button>':'';
-    var rxDateStr=r.prescription_date?'<div style="font-size:10px;color:#185FA5;">開方:'+r.prescription_date.slice(5).replace('-','/')+'</div>':"";
+    var isCtrl=(r.ctrl_level==="1"||r.ctrl_level==="2"||r.ctrl_level==="3"||r.ctrl_level===1||r.ctrl_level===2||r.ctrl_level===3);
+    var rxDateStr=(isCtrl&&r.prescription_date)?'<div style="font-size:10px;color:#185FA5;">開方:'+r.prescription_date.slice(5).replace('-','/')+'</div>':"";
     var dispNoCell='<div style="font-size:11px;">'+shortDn+'</div>'+rxDateStr;
-    return "<tr><td>"+t+"</td><td class='mn'>"+(r.patient_id||"")+"</td><td>"+dispNoCell+"</td><td class='mn'>"+(r.drug_code||"")+"</td><td class='mn'>"+(r.stock_code||"")+"</td><td style='max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;' title='"+(r.drug_name||"")+"'>"+tc(r.drug_name||"")+"</td><td style='text-align:right;'>"+(r.quantity||"")+"</td><td>"+cb+"</td><td>"+pb+"</td><td>"+db+"</td><td style='font-size:12px;'>"+pharmacistName+"</td><td>"+delBtn+"</td></tr>";
+    return "<tr><td>"+t+"</td><td class='mn'>"+(r.patient_id||"")+"</td><td>"+dispNoCell+"</td><td class='mn'>"+(r.drug_code||"")+"</td><td class='mn'>"+(r.stock_code||"")+"</td><td style='max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;' title='"+(r.drug_name||"")+"'>"+tc(r.drug_name||"")+"</td><td style='text-align:right;'>"+(r.quantity||"")+"</td><td>"+cb+"</td><td>"+pb+"</td><td>"+db+"</td><td style='font-size:12px;white-space:nowrap;'>"+pharmacistName+"</td><td>"+delBtn+"</td></tr>";
   }).join("");
 }
 
