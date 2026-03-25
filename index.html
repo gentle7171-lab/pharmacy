@@ -530,7 +530,20 @@ window.togglePwd=function(id,btn){
 g("lb").onclick=login; g("pw").onkeydown=function(e){if(e.key==="Enter")login();};
 g("lo").onclick=logout;
 g("ns").onclick=function(){tab("s");}; g("nr").onclick=function(){tab("r");}; g("np").onclick=function(){tab("p");}; g("na").onclick=function(){tab("a");}; g("nd").onclick=function(){tab("d");};
-g("bi").onkeydown=function(e){if(e.key==="Enter"){e.preventDefault();procBar(g("bi").value.trim());}};
+// 條碼輸入：Enter 直接送出，或停止輸入 300ms 後自動送出（支援無 Enter 後綴的條碼機）
+var _biTimer=null;
+g("bi").onkeydown=function(e){
+  if(e.key==="Enter"){e.preventDefault();clearTimeout(_biTimer);var v=g("bi").value.trim();if(v)procBar(v);}
+};
+g("bi").oninput=function(){
+  clearTimeout(_biTimer);
+  var v=g("bi").value.trim();
+  if(!v) return;
+  _biTimer=setTimeout(function(){
+    var cur=g("bi").value.trim();
+    if(cur) procBar(cur);
+  },300);
+};
 g("e-cfm").onclick=saveEmgRecord; g("e-cancel").onclick=function(){hi("emg-card");g("bi").value="";g("bi").focus();};
 g("cd-cfm").onclick=saveCtrlRecord; g("cd-cancel").onclick=function(){hi("ctrl-date-card");g("bi").value="";g("bi").focus();};
 g("unk-ok").onclick=function(){hi("unk-card");g("bi").value="";g("bi").focus();};
