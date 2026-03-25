@@ -80,7 +80,14 @@ tr:hover td{background:#fafafa;}
     </div>
     <div class="card" style="padding:20px;">
       <div class="mg"><label class="lbl">員工編號</label><input class="inp" id="ei" placeholder="請輸入員編" autocomplete="username"/></div>
-      <div class="mg"><label class="lbl">密碼 <span style="font-weight:400;color:#9ca3af;">（預設與員編相同）</span></label><input type="password" class="inp" id="pw" placeholder="請輸入密碼" autocomplete="current-password"/></div>
+      <div class="mg"><label class="lbl">密碼 <span style="font-weight:400;color:#9ca3af;">（預設與員編相同）</span></label>
+        <div style="position:relative;">
+          <input type="password" class="inp" id="pw" placeholder="請輸入密碼" autocomplete="current-password" style="padding-right:36px;"/>
+          <button type="button" onclick="togglePwd('pw',this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);border:none;background:none;cursor:pointer;color:#9ca3af;padding:0;" title="顯示/隱藏密碼">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
       <div class="mg"><label class="lbl">所屬院區</label>
         <select class="inp" id="lc"><option value="douliou">斗六院區</option><option value="huwei">虎尾院區</option></select>
       </div>
@@ -331,9 +338,9 @@ tr:hover td{background:#fafafa;}
           <button class="btn bp" style="font-size:12px;" id="au">新增</button>
         </div>
         <!-- CSV 批次匯入 -->
-        <div style="margin-bottom:10px;">
-          <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">CSV 批次貼上（格式：員編,姓名,斗六或虎尾,一般藥師或藥庫藥師或管理員）</div>
-          <textarea class="inp" id="csv-input" rows="4" placeholder="Y00001,王小明,斗六,一般藥師&#10;Y00002,李小花,虎尾,藥庫藥師" style="font-family:monospace;font-size:12px;resize:vertical;"></textarea>
+        <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #f3f4f6;">
+          <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">CSV 批次貼上（格式：員編,姓名,斗六或虎尾,一般藥師或藥庫藥師或管理員）同員編+院區自動覆蓋</div>
+          <textarea class="inp" id="csv-input" rows="3" placeholder="Y00001,王小明,斗六,一般藥師&#10;Y00002,李小花,虎尾,藥庫藥師" style="font-family:monospace;font-size:12px;resize:vertical;"></textarea>
           <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;">
             <button class="btn bp" style="font-size:12px;" id="csv-import-btn">批次匯入</button>
             <input type="file" id="user-excel-file" accept=".xlsx,.xls" style="font-size:12px;"/>
@@ -342,38 +349,50 @@ tr:hover td{background:#fafafa;}
           <div style="font-size:11px;color:#9ca3af;margin-top:4px;">Excel 欄位：員編、姓名、院區（斗六/虎尾）、身份別或角色（一般藥師/藥庫藥師/管理員）</div>
           <div id="csv-status" style="margin-top:6px;font-size:12px;"></div>
         </div>
-        <div id="ul"></div>
-        <div style="font-size:13px;font-weight:600;margin:16px 0 8px;padding-top:14px;border-top:1px solid #e5e7eb;">藥品主檔查詢</div>
+        <!-- 篩選列 -->
         <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;align-items:center;">
-          <input class="inp" id="drug-search" placeholder="輸入台大碼、庫存碼或商品名關鍵字" style="flex:1;min-width:180px;"/>
-          <select class="inp" id="drug-ctrl-filter" style="width:auto;">
-            <option value="all">全部類別</option>
-            <option value="0">一般（含管四）</option>
-            <option value="12">管一二級</option>
-            <option value="3">管三級</option>
+          <input class="inp" id="ul-search" placeholder="搜尋姓名或員編" style="width:130px;font-size:12px;"/>
+          <select class="inp" id="ul-campus-filter" style="width:auto;font-size:12px;">
+            <option value="all">全部院區</option>
+            <option value="douliou">斗六</option>
+            <option value="huwei">虎尾</option>
           </select>
-          <button class="btn bp" style="font-size:12px;" id="drug-search-btn">查詢</button>
+          <select class="inp" id="ul-role-filter" style="width:auto;font-size:12px;">
+            <option value="all">全部角色</option>
+            <option value="pharmacist">一般藥師</option>
+            <option value="warehouse">藥庫藥師</option>
+            <option value="admin">管理員</option>
+          </select>
+          <button class="btn bp" style="font-size:12px;" id="ul-filter-btn">搜尋</button>
+          <button class="btn" style="font-size:12px;" id="ul-all-btn">顯示全部</button>
+          <span id="ul-count" style="font-size:12px;color:#6b7280;margin-left:auto;"></span>
         </div>
-        <div id="drug-search-result" style="font-size:12px;color:#9ca3af;">輸入關鍵字後查詢</div>
-        <div style="font-size:13px;font-weight:600;margin:16px 0 8px;padding-top:14px;border-top:1px solid #e5e7eb;">藥品主檔更新</div>
-        <div class="al ai" style="margin-bottom:8px;">上傳新的藥品主檔 Excel 即可更新，匯入後系統自動比對暫存紀錄</div>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-          <input type="file" id="df2" accept=".xlsx,.xls" style="font-size:12px;"/>
-          <button class="btn bp" style="font-size:12px;" id="imp">匯入</button>
-        </div>
-        <div id="is" style="margin-top:8px;font-size:12px;"></div>
-        <div style="font-size:13px;font-weight:600;margin:16px 0 8px;padding-top:14px;border-top:1px solid #e5e7eb;">
-          待處理暫存紀錄
-          <span id="pending-count-label" style="font-size:12px;font-weight:400;color:#92400e;margin-left:6px;"></span>
-        </div>
-        <div id="pending-list"><div style="font-size:12px;color:#9ca3af;">無待處理資料</div></div>
+        <div id="ul"></div>
       </div>
     </div>
 
     <!-- DRUG MASTER TAB -->
     <div id="tdm" class="hide">
       <div class="card">
-        <div style="font-size:13px;font-weight:600;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #e5e7eb;">藥品主檔查詢</div>
+        <!-- 1. 待處理暫存紀錄 -->
+        <div style="font-size:13px;font-weight:600;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid #e5e7eb;">
+          待處理暫存紀錄
+          <span id="pending-count-label" style="font-size:12px;font-weight:400;color:#92400e;margin-left:6px;"></span>
+        </div>
+        <div class="al aw" style="margin-bottom:8px;">以下為刷碼時比對不到藥品主檔的暫存資料，請更新主檔後系統會自動轉入，或手動確認轉入。</div>
+        <div id="pending-list" style="margin-bottom:16px;"><div style="font-size:12px;color:#9ca3af;">無待處理資料</div></div>
+
+        <!-- 2. 更新藥品主檔 -->
+        <div style="font-size:13px;font-weight:600;margin-bottom:8px;padding-top:14px;padding-bottom:8px;border-top:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb;">更新藥品主檔</div>
+        <div class="al ai" style="margin-bottom:8px;">上傳新的藥品主檔 Excel 即可更新，匯入後自動比對暫存紀錄</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px;">
+          <input type="file" id="dm-file" accept=".xlsx,.xls" style="font-size:12px;"/>
+          <button class="btn bp" style="font-size:12px;" id="dm-imp-btn">匯入更新</button>
+        </div>
+        <div id="dm-imp-status" style="margin-bottom:8px;font-size:12px;"></div>
+
+        <!-- 3. 藥品主檔查詢 -->
+        <div style="font-size:13px;font-weight:600;margin-bottom:10px;padding-top:14px;padding-bottom:8px;border-top:1px solid #e5e7eb;">藥品主檔查詢</div>
         <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center;">
           <input class="inp" id="dm-kw" placeholder="台大碼、庫存碼或商品名關鍵字" style="flex:1;min-width:180px;"/>
           <select class="inp" id="dm-ctrl" style="width:auto;">
@@ -394,15 +413,6 @@ tr:hover td{background:#fafafa;}
             <tbody id="dm-tbody"><tr><td colspan="5" style="text-align:center;padding:20px;color:#9ca3af;">請輸入關鍵字或點「顯示全部」</td></tr></tbody>
           </table>
         </div>
-        <div style="margin-top:14px;padding-top:12px;border-top:1px solid #e5e7eb;">
-          <div style="font-size:13px;font-weight:600;margin-bottom:8px;">更新藥品主檔</div>
-          <div class="al ai" style="margin-bottom:8px;">上傳新的藥品主檔 Excel 即可更新，匯入後自動比對暫存紀錄</div>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-            <input type="file" id="dm-file" accept=".xlsx,.xls" style="font-size:12px;"/>
-            <button class="btn bp" style="font-size:12px;" id="dm-imp-btn">匯入更新</button>
-          </div>
-          <div id="dm-imp-status" style="margin-top:8px;font-size:12px;"></div>
-        </div>
       </div>
     </div>
 
@@ -413,9 +423,30 @@ tr:hover td{background:#fafafa;}
 <div id="pwd-modal" class="modal-bg hide">
   <div class="modal">
     <h3>修改密碼</h3>
-    <div class="mg"><label class="lbl">目前密碼</label><input type="password" class="inp" id="old-pwd"/></div>
-    <div class="mg"><label class="lbl">新密碼</label><input type="password" class="inp" id="new-pwd"/></div>
-    <div class="mg"><label class="lbl">確認新密碼</label><input type="password" class="inp" id="new-pwd2"/></div>
+    <div class="mg"><label class="lbl">目前密碼</label>
+      <div style="position:relative;">
+        <input type="password" class="inp" id="old-pwd" style="padding-right:36px;"/>
+        <button type="button" onclick="togglePwd('old-pwd',this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);border:none;background:none;cursor:pointer;color:#9ca3af;padding:0;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="mg"><label class="lbl">新密碼</label>
+      <div style="position:relative;">
+        <input type="password" class="inp" id="new-pwd" style="padding-right:36px;"/>
+        <button type="button" onclick="togglePwd('new-pwd',this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);border:none;background:none;cursor:pointer;color:#9ca3af;padding:0;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="mg"><label class="lbl">確認新密碼</label>
+      <div style="position:relative;">
+        <input type="password" class="inp" id="new-pwd2" style="padding-right:36px;"/>
+        <button type="button" onclick="togglePwd('new-pwd2',this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);border:none;background:none;cursor:pointer;color:#9ca3af;padding:0;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+    </div>
     <div id="pwd-err" class="hide" style="color:#dc2626;font-size:12px;margin-bottom:8px;"></div>
     <div style="display:flex;gap:8px;">
       <button class="btn bp" style="flex:1;" id="pwd-save">儲存</button>
@@ -480,6 +511,16 @@ function g(id){return document.getElementById(id);}
 function sh(id){g(id).classList.remove("hide");}
 function hi(id){g(id).classList.add("hide");}
 
+window.togglePwd=function(id,btn){
+  var inp=document.getElementById(id);
+  var show=inp.type==="password";
+  inp.type=show?"text":"password";
+  btn.style.color=show?"#185FA5":"#9ca3af";
+  btn.innerHTML=show
+    ?'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>'
+    :'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+};
+
 // ── Init events ──────────────────────────────────────────
 g("lb").onclick=login; g("pw").onkeydown=function(e){if(e.key==="Enter")login();};
 g("lo").onclick=logout;
@@ -512,9 +553,19 @@ g("batch-verify-c1").onclick=function(){batchVerifyAll("c12");};
 g("batch-verify-c3").onclick=function(){batchVerifyAll("c3");};
 g("batch-verify-sel-c1").onclick=function(){batchVerifySelected("c12");};
 g("batch-verify-sel-c3").onclick=function(){batchVerifySelected("c3");};
-g("au").onclick=addUser; g("imp").onclick=impDrugs;
+g("au").onclick=addUser;
 g("csv-import-btn").onclick=csvImportUsers;
 g("user-excel-btn").onclick=excelImportUsers;
+g("ul-filter-btn").onclick=function(){
+  loadUsers(g("ul-campus-filter").value,g("ul-role-filter").value,g("ul-search").value.trim());
+};
+g("ul-all-btn").onclick=function(){
+  g("ul-campus-filter").value="all";g("ul-role-filter").value="all";g("ul-search").value="";
+  loadUsers("all","all","");
+};
+g("ul-search").onkeydown=function(e){
+  if(e.key==="Enter") g("ul-filter-btn").click();
+};
 g("dm-search-btn").onclick=function(){searchDrugMaster(false);};
 g("dm-all-btn").onclick=function(){searchDrugMaster(true);};
 g("dm-kw").onkeydown=function(e){if(e.key==="Enter") searchDrugMaster(false);};
@@ -523,7 +574,7 @@ g("chpwd-btn").onclick=function(){g("old-pwd").value="";g("new-pwd").value="";g(
 g("pwd-save").onclick=changePwd; g("pwd-cancel").onclick=function(){hi("pwd-modal");};
 g("del-cancel").onclick=function(){hi("del-modal");window._delCb=null;};
 g("del-confirm").onclick=function(){if(window._delCb){window._delCb();hi("del-modal");}};
-g("pending-go").onclick=function(){hi("pending-modal");tab("a");};
+g("pending-go").onclick=function(){hi("pending-modal");tab("d");};
 g("pending-later").onclick=function(){hi("pending-modal");};
 g("pcm-cancel").onclick=function(){hi("pending-confirm-modal");window._pcmCb=null;};
 g("pcm-confirm").onclick=function(){if(window._pcmCb){window._pcmCb();hi("pending-confirm-modal");}};
@@ -576,18 +627,22 @@ function showCtrlNotify(detail){
   el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">'
     +'<div><div style="font-weight:600;color:#dc2626;margin-bottom:5px;">⚠ 管制藥品待核對</div>'
     +'<div style="color:#374151;font-size:12px;">今日有 <strong>'+detail+'</strong> 尚未核對，請前往報表頁面核對。</div></div>'
-    +'<button onclick="document.getElementById(\'ctrl-notify\').remove()" style="border:none;background:none;cursor:pointer;font-size:16px;color:#9ca3af;flex-shrink:0;">×</button>'
+    +'<button onclick="window._closeCtrlNotify()" style="border:none;background:none;cursor:pointer;font-size:16px;color:#9ca3af;flex-shrink:0;">×</button>'
     +'</div>'
     +'<div style="margin-top:10px;display:flex;gap:6px;">'
-    +'<button class="btn bp" style="font-size:11px;padding:4px 10px;" onclick="document.getElementById(\'ctrl-notify\').remove();goToCtrlVerify();">前往核對</button>'
-    +'<button class="btn" style="font-size:11px;padding:4px 10px;" onclick="document.getElementById(\'ctrl-notify\').remove();">稍後處理</button>'
+    +'<button class="btn bp" style="font-size:11px;padding:4px 10px;" onclick="window.goToCtrlVerify();">前往核對</button>'
+    +'<button class="btn" style="font-size:11px;padding:4px 10px;" onclick="window._closeCtrlNotify();">稍後處理</button>'
     +'</div>';
   sh("ctrl-notify");
 }
 
-window.goToCtrlVerify=async function(){
+window._closeCtrlNotify=function(){
   var el=document.getElementById("ctrl-notify");
   if(el) el.remove();
+};
+
+window.goToCtrlVerify=async function(){
+  window._closeCtrlNotify();
   tab("p");
   setTimeout(async function(){
     var td=new Date().toISOString().slice(0,10);
@@ -646,7 +701,8 @@ function tab(t){
   sh(map[t]); g("n"+t).classList.add("on");
   if(t==="r"&&!g("rd").value){var td=new Date().toISOString().slice(0,10);g("rd").value=td;g("rd2").value=td;}
   if(t==="p"){var td=new Date().toISOString().slice(0,10);if(!g("pd").value)g("pd").value=td;if(!g("pd2").value)g("pd2").value=td;if(CU&&(CU.role==="warehouse"||CU.role==="admin"))checkCtrlDrugs();}
-  if(t==="a"){loadUsers();loadPending();}
+  if(t==="a"){loadUsers();}
+  if(t==="d"){searchDrugMaster(false);loadPending();}
   if(t==="s"){
     if(!g("rx-date").value) g("rx-date").value=new Date().toISOString().slice(0,10);
     checkRxDate();
@@ -1067,28 +1123,110 @@ async function buildNameMap(empIds){
 }
 
 // ── Admin ─────────────────────────────────────────────────
-async function loadUsers(){
-  var d=await sel("users","order=campus.asc,emp_id.asc&select=*");
-  var el=g("ul");
-  if(!Array.isArray(d)||!d.length){el.innerHTML='<div style="font-size:12px;color:#9ca3af;">尚無帳號</div>';return;}
-  el.innerHTML=d.map(function(u){
-    var cl=u.campus==="douliou"?"bdl":"bhw",lb=u.campus==="douliou"?"斗六":"虎尾";
-    var rl=ROLE_LABEL[u.role]||"一般藥師";
-    return '<div class="ur"><div><span class="bdg '+cl+'" style="margin-right:4px;">'+lb+'</span><span class="bdg bgn" style="margin-right:4px;">'+rl+'</span>'+u.emp_id+' '+u.name+'</div><div style="display:flex;gap:4px;"><button class="btn" style="font-size:11px;padding:2px 7px;" onclick="window._rp(\''+u.id+'\',\''+u.emp_id+'\')">重設密碼</button><button class="btn" style="font-size:11px;padding:2px 7px;color:#dc2626;border-color:#fca5a5;" onclick="window._du(\''+u.id+'\',\''+u.name+'\')">刪除</button></div></div>';
-  }).join("");
+async function loadUsers(campusFilter,roleFilter,searchKw){
+  var qs="order=campus.asc,emp_id.asc&select=*";
+  if(campusFilter&&campusFilter!=="all") qs+="&campus=eq."+campusFilter;
+  if(roleFilter&&roleFilter!=="all") qs+="&role=eq."+roleFilter;
+  var d=await sel("users",qs);
+  var el=g("ul"),cnt=g("ul-count");
+  if(!Array.isArray(d)){el.innerHTML='<div style="font-size:12px;color:#9ca3af;">載入失敗</div>';return;}
+  if(searchKw){
+    var kw=searchKw.toLowerCase();
+    d=d.filter(function(u){return (u.emp_id||"").toLowerCase().includes(kw)||(u.name||"").toLowerCase().includes(kw);});
+  }
+  if(!d.length){el.innerHTML='<div style="font-size:12px;color:#9ca3af;">查無帳號</div>';cnt.textContent="";return;}
+  cnt.textContent="共 "+d.length+" 筆";
+  el.innerHTML='<div style="overflow-x:auto;"><table style="width:100%;min-width:560px;border-collapse:collapse;">'
+    +'<thead><tr style="font-size:11px;color:#6b7280;border-bottom:1px solid #e5e7eb;">'
+    +'<th style="padding:6px 4px;"><input type="checkbox" id="chk-all-users" title="全選" onchange="window._chkAllUsers(this)"/></th>'
+    +'<th style="padding:6px 8px;">員編</th><th style="padding:6px 8px;">姓名</th>'
+    +'<th style="padding:6px 8px;">院區</th><th style="padding:6px 8px;">角色</th>'
+    +'<th style="padding:6px 8px;">操作</th>'
+    +'</tr></thead><tbody>'
+    +d.map(function(u){
+      var cl=u.campus==="douliou"?"bdl":"bhw",lb=u.campus==="douliou"?"斗六":"虎尾";
+      return '<tr style="border-bottom:1px solid #f3f4f6;font-size:12px;">'
+        +'<td style="padding:6px 4px;"><input type="checkbox" class="user-chk" data-id="'+u.id+'" data-name="'+u.name+'"/></td>'
+        +'<td style="padding:6px 8px;" class="mn">'+u.emp_id+'</td>'
+        +'<td style="padding:6px 8px;">'+u.name+'</td>'
+        +'<td style="padding:6px 4px;">'
+        +'<select id="sel-cp-'+u.id+'" class="inp" style="width:auto;font-size:11px;padding:2px 6px;">'
+        +'<option value="douliou"'+(u.campus==="douliou"?" selected":"")+'>斗六</option>'
+        +'<option value="huwei"'+(u.campus==="huwei"?" selected":"")+'>虎尾</option>'
+        +'</select></td>'
+        +'<td style="padding:6px 4px;">'
+        +'<select id="sel-rl-'+u.id+'" class="inp" style="width:auto;font-size:11px;padding:2px 6px;">'
+        +'<option value="pharmacist"'+(u.role==="pharmacist"?" selected":"")+'>一般藥師</option>'
+        +'<option value="warehouse"'+(u.role==="warehouse"?" selected":"")+'>藥庫藥師</option>'
+        +'<option value="admin"'+(u.role==="admin"?" selected":"")+'>管理員</option>'
+        +'</select></td>'
+        +'<td style="padding:6px 4px;">'
+        +'<button class="btn" style="font-size:11px;padding:2px 7px;" onclick="window._rp(\''+u.id+'\',\''+u.emp_id+'\')">重設密碼</button>'
+        +'</td></tr>';
+    }).join("")
+    +'</tbody></table></div>'
+    +'<div style="display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid #f3f4f6;">'
+    +'<button class="btn bp" style="font-size:12px;" onclick="window._saveAllUsers()">儲存變更</button>'
+    +'<button class="btn" style="font-size:12px;color:#dc2626;border-color:#fca5a5;" onclick="window._batchDel()">刪除勾選</button>'
+    +'</div>';
 }
+window._chkAllUsers=function(chk){
+  document.querySelectorAll(".user-chk").forEach(function(c){c.checked=chk.checked;});
+};
+
+window._saveAllUsers=async function(){
+  var rows=document.querySelectorAll(".user-chk");
+  if(!rows.length){alert("無資料");return;}
+  var changed=0;
+  for(var i=0;i<rows.length;i++){
+    var id=rows[i].getAttribute("data-id");
+    var cp=document.getElementById("sel-cp-"+id);
+    var rl=document.getElementById("sel-rl-"+id);
+    if(cp&&rl){
+      await upd("users","id=eq."+id,{campus:cp.value,role:rl.value});
+      changed++;
+    }
+  }
+  showToast("已儲存 "+changed+" 筆變更","ok");
+  loadUsers(g("ul-campus-filter").value,g("ul-role-filter").value,g("ul-search").value.trim());
+};
+
+window._batchDel=async function(){
+  var checked=document.querySelectorAll(".user-chk:checked");
+  if(!checked.length){alert("請先勾選要刪除的帳號");return;}
+  var names=Array.from(checked).map(function(c){return c.getAttribute("data-name");});
+  g("del-msg").textContent="確定要刪除以下 "+checked.length+" 個帳號？\n"+names.join("、");
+  window._delCb=async function(){
+    for(var i=0;i<checked.length;i++){
+      await del2("users","id=eq."+checked[i].getAttribute("data-id"));
+    }
+    loadUsers(g("ul-campus-filter").value,g("ul-role-filter").value,g("ul-search").value.trim());
+  };
+  sh("del-modal");
+};
+
+window._uc=async function(id){
+  var cp=document.getElementById("sel-cp-"+id).value;
+  var rl=document.getElementById("sel-rl-"+id).value;
+  await upd("users","id=eq."+id,{campus:cp,role:rl});
+  showToast("已更新","ok");
+  loadUsers(g("ul-campus-filter").value,g("ul-role-filter").value,g("ul-search").value.trim());
+};
 window._rp=async function(id,ei){if(!confirm("將 "+ei+" 密碼重設為員編？"))return;await upd("users","id=eq."+id,{password_hash:ei});alert("已重設");};
 window._du=async function(id,nm){
   g("del-msg").textContent='確定要刪除帳號「'+nm+'」嗎？';
-  window._delCb=async function(){await del2("users","id=eq."+id);loadUsers();};
+  window._delCb=async function(){
+    await del2("users","id=eq."+id);
+    loadUsers(g("ul-campus-filter").value,g("ul-role-filter").value,g("ul-search").value.trim());
+  };
   sh("del-modal");
 };
 async function addUser(){
   var ei=g("ne").value.trim(),nm=g("nn").value.trim(),cp=g("nc").value,rl=g("nrl").value;
   if(!ei||!nm){alert("請填員編和姓名");return;}
-  var r=await ins("users",{emp_id:ei,name:nm,campus:cp,role:rl,password_hash:ei,is_active:true});
-  if(r.error){alert("新增失敗：已有相同員編+院區");return;}
-  g("ne").value="";g("nn").value="";alert("已新增 "+nm+"（"+ROLE_LABEL[rl]+"），密碼為員編");loadUsers();
+  var r=await ups("users",{emp_id:ei,name:nm,campus:cp,role:rl,password_hash:ei,is_active:true},"emp_id,campus");
+  if(r.error){alert("新增失敗");return;}
+  g("ne").value="";g("nn").value="";alert("已新增／更新 "+nm+"（"+ROLE_LABEL[rl]+"），密碼為員編");loadUsers("all","all","");
 }
 
 // ── CSV 批次匯入 ──────────────────────────────────────────
@@ -1113,12 +1251,12 @@ async function csvImportUsers(){
   st.textContent="匯入中...";st.style.color="#185FA5";
   var ok=0,fail=0;
   for(var i=0;i<records.length;i++){
-    var r=await ins("users",records[i]);
+    var r=await ups("users",records[i],"emp_id,campus");
     if(r.error) fail++; else ok++;
   }
-  st.textContent="✅ 完成！成功 "+ok+" 筆"+(fail>0?"，失敗（重複）"+fail+" 筆":"");
+  st.textContent="✅ 完成！成功 "+ok+" 筆"+(fail>0?"，失敗 "+fail+" 筆":"");
   st.style.color="#059669";
-  g("csv-input").value=""; loadUsers();
+  g("csv-input").value=""; loadUsers(g("ul-campus-filter").value,g("ul-role-filter").value,g("ul-search").value.trim());
 }
 
 // ── Excel 批次匯入人員 ────────────────────────────────────
@@ -1147,11 +1285,11 @@ function excelImportUsers(){
       st.textContent="匯入 "+records.length+" 筆...";
       var ok=0,fail=0;
       for(var i=0;i<records.length;i++){
-        var r=await ins("users",records[i]);
+        var r=await ups("users",records[i],"emp_id,campus");
         if(r.error) fail++; else ok++;
       }
-      st.textContent="✅ 完成！成功 "+ok+" 筆"+(fail>0?"，失敗（重複）"+fail+" 筆":"");
-      st.style.color="#059669"; loadUsers();
+      st.textContent="✅ 完成！成功 "+ok+" 筆"+(fail>0?"，失敗 "+fail+" 筆":"");
+      st.style.color="#059669"; loadUsers(g("ul-campus-filter").value,g("ul-role-filter").value,g("ul-search").value.trim());
     };
     rdr.readAsArrayBuffer(f);
   });
