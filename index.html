@@ -810,6 +810,12 @@ async function saveCtrlRecord(){
 async function saveEmgRecord(){
   if(!PQ) return;
   var pc=g("e-ps").value, dc=g("e-ds").value;
+  // 開方院區與領藥院區不能相同
+  if(pc===dc){
+    var pcLabel=pc==="douliou"?"斗六":"虎尾";
+    alert("開方院區與領藥院區不能相同（目前均為"+pcLabel+"），請重新選擇。");
+    return;
+  }
   hi("emg-card");
   if(!PD){
     await ins("pending_records",{patient_account:PQ.pa,patient_id:PQ.pi,dispense_no:PQ.dn,drug_code:PQ.dc,quantity:PQ.qt,qr_unit:PQ.qu,campus:dc,pharmacist_emp_id:CU.emp_id,note:"急診處方，藥品台大碼不在主檔"});
