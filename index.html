@@ -6,7 +6,7 @@
 <title>兩院區藥品互領系統</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:Arial,sans-serif;background:#F4F5F7;font-size:14px;color:#111;}
+body{font-family:Arial,sans-serif;background:#F4F5F7;font-size:16px;color:#111;}
 .hide{display:none!important;}
 #hdr{background:#fff;border-bottom:1px solid #e5e7eb;height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;position:sticky;top:0;z-index:9;}
 .logo{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;}
@@ -14,7 +14,7 @@ body{font-family:Arial,sans-serif;background:#F4F5F7;font-size:14px;color:#111;}
 nav{display:flex;gap:2px;}
 .nb{padding:5px 10px;border-radius:6px;border:none;background:transparent;font-size:13px;cursor:pointer;color:#6b7280;}
 .nb.on{background:#EFF6FF;color:#185FA5;font-weight:600;}
-#wrap{max-width:760px;margin:0 auto;padding:16px;}
+#wrap{max-width:980px;margin:0 auto;padding:16px 8px;}
 .card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:12px;}
 .btn{padding:7px 14px;border-radius:7px;border:1px solid #d1d5db;background:#fff;font-size:13px;cursor:pointer;font-family:inherit;}
 .btn:active{transform:scale(0.97);}
@@ -287,7 +287,7 @@ tr:hover td{background:#fafafa;}
         </div>
         <div style="overflow-x:auto;">
           <table style="min-width:780px;">
-            <thead><tr><th><input type="checkbox" id="chk-all-c1" title="全選"/></th><th>時間</th><th>病歷號</th><th>領藥號</th><th>藥品台大碼</th><th>庫存碼</th><th>商品名</th><th>量</th><th>開方</th><th>領藥</th><th>核對狀態</th><th>核對人員／時間</th></tr></thead>
+            <thead><tr><th><input type="checkbox" id="chk-all-c1" title="全選"/></th><th>時間</th><th>病歷號</th><th>領藥號</th><th>藥品台大碼</th><th>庫存碼</th><th>商品名</th><th>數量</th><th>開方</th><th>領藥</th><th>核對狀態</th><th>核對人員／時間</th></tr></thead>
             <tbody id="vtb-c1"></tbody>
           </table>
         </div>
@@ -314,7 +314,7 @@ tr:hover td{background:#fafafa;}
         </div>
         <div style="overflow-x:auto;">
           <table style="min-width:780px;">
-            <thead><tr><th><input type="checkbox" id="chk-all-c3" title="全選"/></th><th>時間</th><th>病歷號</th><th>領藥號</th><th>藥品台大碼</th><th>庫存碼</th><th>商品名</th><th>量</th><th>開方</th><th>領藥</th><th>核對狀態</th><th>核對人員／時間</th></tr></thead>
+            <thead><tr><th><input type="checkbox" id="chk-all-c3" title="全選"/></th><th>時間</th><th>病歷號</th><th>領藥號</th><th>藥品台大碼</th><th>庫存碼</th><th>商品名</th><th>數量</th><th>開方</th><th>領藥</th><th>核對狀態</th><th>核對人員／時間</th></tr></thead>
             <tbody id="vtb-c3"></tbody>
           </table>
         </div>
@@ -341,7 +341,7 @@ tr:hover td{background:#fafafa;}
         </div>
         <div style="overflow-x:auto;">
           <table style="min-width:780px;">
-            <thead><tr><th><input type="checkbox" id="chk-all-c4" title="全選"/></th><th>時間</th><th>病歷號</th><th>領藥號</th><th>藥品台大碼</th><th>庫存碼</th><th>商品名</th><th>量</th><th>開方</th><th>領藥</th><th>核對狀態</th><th>核對人員／時間</th></tr></thead>
+            <thead><tr><th><input type="checkbox" id="chk-all-c4" title="全選"/></th><th>時間</th><th>病歷號</th><th>領藥號</th><th>藥品台大碼</th><th>庫存碼</th><th>商品名</th><th>數量</th><th>開方</th><th>領藥</th><th>核對狀態</th><th>核對人員／時間</th></tr></thead>
             <tbody id="vtb-c4"></tbody>
           </table>
         </div>
@@ -533,7 +533,11 @@ async function sel(t,q,cnt){
   return r.json();
 }
 async function ins(t,d){var r=await req(t,{o:{method:"POST",body:JSON.stringify(d)}});if(!r.ok){var e=await r.json();return{error:e};}return{data:await r.json()};}
-async function ups(t,d,oc){var r=await req(t+"?on_conflict="+oc,{h:{"Prefer":"resolution=merge-duplicates,return=representation"},o:{method:"POST",body:JSON.stringify(d)}});if(!r.ok){return{error:await r.json()};}return{data:await r.json()};}
+async function ups(t,d,oc){
+  var r=await req(t+"?on_conflict="+oc,{h:{"Prefer":"resolution=merge-duplicates,return=representation"},o:{method:"POST",body:JSON.stringify(d)}});
+  if(!r.ok){var e=await r.json();console.error("ups error",t,e);return{error:e};}
+  return{data:await r.json()};
+}
 async function upd(t,m,d){var r=await req(t+"?"+m,{o:{method:"PATCH",body:JSON.stringify(d)}});return r.ok;}
 async function del2(t,m){var r=await req(t+"?"+m,{o:{method:"DELETE"}});return r.ok;}
 
@@ -1072,7 +1076,7 @@ async function expCtrlSheet(tp){
   var dates=getRptDates();
   var rows=await fetchRpt(tp);
   if(!rows||!rows.length){alert("查無資料");return;}
-  var fn=(tp==="c12"?"管一二級":"管三級")+"日報表_"+dates.sd+(dates.sd!==dates.ed?"_至_"+dates.ed:"")+".xlsx";
+  var fn=(tp==="c12"?"管一二級":tp==="c4"?"管四級":"管三級")+"日報表_"+dates.sd+(dates.sd!==dates.ed?"_至_"+dates.ed:"")+".xlsx";
   loadXLSX(function(){
     var ws=[["操作時間","開方日期","病患帳號","病歷號","領藥號","藥品台大碼","庫存碼","商品名","管制級別","數量","單位","開方院區","領藥院區","操作藥師","核對狀態","核對人員","核對時間"]];
     rows.forEach(function(r){ws.push([new Date(r.dispensed_at).toLocaleString("zh-TW"),r.prescription_date||"",r.patient_account,r.patient_id,r.dispense_no,r.drug_code,r.stock_code,r.drug_name,"管"+r.ctrl_level,r.quantity,r.drug_unit,CL[r.prescribe_campus],CL[r.dispense_campus],r.pharmacist_emp_id,r.verified?"已核對":"未核對",r.verified_by||"",r.verified_at?new Date(r.verified_at).toLocaleString("zh-TW"):""]);});
@@ -1492,8 +1496,14 @@ async function impDrugsMaster(){
       }
       if(!drugs.length){st.textContent="讀取到 0 筆，請確認使用原始藥品主檔.xlsx";st.style.color="#dc2626";return;}
       st.textContent="匯入 "+drugs.length+" 筆...";
-      var done=0,bs=200;
-      for(var k=0;k<drugs.length;k+=bs){await ups("drugs",drugs.slice(k,k+bs),"drug_code");done+=Math.min(bs,drugs.length-k);st.textContent="匯入中... "+done+"/"+drugs.length;}
+      var done=0,errs=0,bs=50;
+      for(var k=0;k<drugs.length;k+=bs){
+        var batch=drugs.slice(k,k+bs);
+        var res=await ups("drugs",batch,"drug_code");
+        if(res&&res.error){errs+=batch.length;console.error("upsert error:",res.error);}
+        else{done+=batch.length;}
+        st.textContent="匯入中... "+(done+errs)+"/"+drugs.length+(errs>0?" ("+errs+"筆失敗)":"");
+      }
       st.textContent="✅ 完成！共 "+done+" 筆，正在比對暫存紀錄...";st.style.color="#185FA5";
       await autoConvertPending();
       var remain=await sel("pending_records","select=id",true);
