@@ -14,7 +14,7 @@ body{font-family:Arial,sans-serif;background:#F4F5F7;font-size:16px;color:#111;}
 nav{display:flex;gap:2px;}
 .nb{padding:5px 10px;border-radius:6px;border:none;background:transparent;font-size:13px;cursor:pointer;color:#6b7280;}
 .nb.on{background:#EFF6FF;color:#185FA5;font-weight:600;}
-#wrap{max-width:980px;margin:0 auto;padding:16px 8px;}
+#wrap{max-width:760px;margin:0 auto;padding:16px;}
 .card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:12px;}
 .btn{padding:7px 14px;border-radius:7px;border:1px solid #d1d5db;background:#fff;font-size:13px;cursor:pointer;font-family:inherit;}
 .btn:active{transform:scale(0.97);}
@@ -1109,12 +1109,12 @@ async function toggleVerify(panelId,tp){
     tb.innerHTML=Object.values(nm).map(function(i){
       var n=i.dl-i.hw,dir=n>0?"斗六→虎尾":n<0?"虎尾→斗六":"持平";
       var vs=i.ver?'<span class="bdg ag" style="font-size:10px;white-space:nowrap;">已核對</span>':'<span class="bdg bwn" style="font-size:10px;white-space:nowrap;">未核對</span>';
-      var verInfo=i.ver?'<div style="font-size:11px;color:#6b7280;">'+(nameMap2[i.vby]||i.vby)+'</div><div style="font-size:10px;color:#9ca3af;">'+new Date(i.vat).toLocaleString("zh-TW")+'</div>':"";
+      var verInfo=i.ver?'<div style="font-size:11px;color:#6b7280;white-space:nowrap;">'+(nameMap2[i.vby]||i.vby)+'<br>'+new Date(i.vat).toLocaleDateString("zh-TW")+'<br>'+new Date(i.vat).toLocaleTimeString("zh-TW")+'</div>':"";
       var chk=!i.ver?'<input type="checkbox" class="vchk-g" data-dc="'+i.dc+'" style="cursor:pointer;"/>':'';
       var vbtn=(!i.ver&&(CU.role==="warehouse"||CU.role==="admin"))
         ?'<button class="btn" style="font-size:11px;padding:2px 7px;color:#059669;border-color:#6ee7b7;" onclick="verifyDrug(\''+i.dc+'\',\''+dt+'\')">核對</button>'
         :verInfo;
-      return "<tr><td>"+chk+"</td><td class='mn'>"+i.dc+"</td><td class='mn'>"+i.sc+"</td><td>"+tc(i.n)+"</td><td style='text-align:right;'>"+i.dl+"</td><td style='text-align:right;'>"+i.hw+"</td><td>"+dir+" "+Math.abs(n)+"</td><td>"+vs+"</td><td>"+vbtn+"</td></tr>";
+      return "<tr><td>"+chk+"</td><td class='mn'>"+i.dc+"</td><td class='mn'>"+i.sc+"</td><td>"+tc(i.n)+"</td><td style='text-align:right;'>"+i.dl+"</td><td style='text-align:right;'>"+i.hw+"</td><td style='white-space:nowrap;'>"+dir+" "+Math.abs(n)+"</td><td>"+vs+"</td><td>"+vbtn+"</td></tr>";
     }).join("");
     // 全選
     var chkAllG=g("chk-all-g");
@@ -1132,7 +1132,7 @@ async function toggleVerify(panelId,tp){
       var vs=r.verified?'<span class="bdg ag" style="font-size:10px;white-space:nowrap;">已核對</span>':'<span class="bdg bwn" style="font-size:10px;white-space:nowrap;">未核對</span>';
       var pb='<span class="bdg '+(r.prescribe_campus==="douliou"?"bdl":"bhw")+'" style="font-size:10px;">'+(r.prescribe_campus==="douliou"?"斗六":"虎尾")+'</span>';
       var db='<span class="bdg '+(r.dispense_campus==="douliou"?"bdl":"bhw")+'" style="font-size:10px;">'+(r.dispense_campus==="douliou"?"斗六":"虎尾")+'</span>';
-      var verInfo=r.verified?'<div style="font-size:11px;color:#6b7280;">'+(nameMap2[r.verified_by]||r.verified_by)+'</div><div style="font-size:10px;color:#9ca3af;">'+new Date(r.verified_at).toLocaleString("zh-TW")+'</div>':"";
+      var verInfo=r.verified?'<div style="font-size:11px;color:#6b7280;white-space:nowrap;">'+(nameMap2[r.verified_by]||r.verified_by)+'<br>'+new Date(r.verified_at).toLocaleDateString("zh-TW")+'<br>'+new Date(r.verified_at).toLocaleTimeString("zh-TW")+'</div>':"";
       var chk=!r.verified?'<input type="checkbox" class="vchk-'+tpShort+'" data-id="'+r.id+'" style="cursor:pointer;"/>':'';
       var rxStr=r.prescription_date?'<div style="font-size:10px;color:#185FA5;">開方:'+r.prescription_date.slice(5).replace('-','/')+'</div>':"";
       var dispNoCell='<div style="font-size:11px;">'+shortDispNo(r.dispense_no||"")+'</div>'+rxStr;
