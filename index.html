@@ -363,22 +363,22 @@ tr:hover td{background:#fafafa;}
           <input class="inp" id="nn" placeholder="姓名" style="width:90px;"/>
           <select class="inp" id="nc" style="width:auto;"><option value="douliou">斗六</option><option value="huwei">虎尾</option></select>
           <select class="inp" id="nrl" style="width:auto;">
-            <option value="pharmacist">一般藥師</option>
-            <option value="warehouse">藥庫藥師</option>
+            <option value="pharmacist">一般</option>
+            <option value="warehouse">藥庫</option>
             <option value="admin">管理員</option>
           </select>
           <button class="btn bp" style="font-size:12px;" id="au">新增</button>
         </div>
         <!-- CSV 批次匯入 -->
         <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #f3f4f6;">
-          <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">CSV 批次貼上（格式：員編,姓名,斗六或虎尾,一般藥師或藥庫藥師或管理員）同員編+院區自動覆蓋</div>
-          <textarea class="inp" id="csv-input" rows="3" placeholder="Y00001,王小明,斗六,一般藥師&#10;Y00002,李小花,虎尾,藥庫藥師" style="font-family:monospace;font-size:12px;resize:vertical;"></textarea>
+          <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">CSV 批次貼上（格式：員編,姓名,斗六或虎尾,一般或藥庫或管理員）同員編+院區自動覆蓋</div>
+          <textarea class="inp" id="csv-input" rows="3" placeholder="Y00001,王小明,斗六,一般&#10;Y00002,李小花,虎尾,藥庫" style="font-family:monospace;font-size:12px;resize:vertical;"></textarea>
           <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;">
             <button class="btn bp" style="font-size:12px;" id="csv-import-btn">批次匯入</button>
             <input type="file" id="user-excel-file" accept=".xlsx,.xls" style="font-size:12px;"/>
             <button class="btn bp" style="font-size:12px;" id="user-excel-btn">Excel 匯入</button>
           </div>
-          <div style="font-size:11px;color:#9ca3af;margin-top:4px;">Excel 欄位：員編、姓名、院區（斗六/虎尾）、身份別或角色（一般藥師/藥庫藥師/管理員）</div>
+          <div style="font-size:11px;color:#9ca3af;margin-top:4px;">Excel 欄位：員編、姓名、院區（斗六/虎尾）、身份別或角色（一般/藥庫/管理員）</div>
           <div id="csv-status" style="margin-top:6px;font-size:12px;"></div>
         </div>
         <!-- 篩選列 -->
@@ -391,8 +391,8 @@ tr:hover td{background:#fafafa;}
           </select>
           <select class="inp" id="ul-role-filter" style="width:auto;font-size:12px;">
             <option value="all">全部角色</option>
-            <option value="pharmacist">一般藥師</option>
-            <option value="warehouse">藥庫藥師</option>
+            <option value="pharmacist">一般</option>
+            <option value="warehouse">藥庫</option>
             <option value="admin">管理員</option>
           </select>
           <button class="btn bp" style="font-size:12px;" id="ul-filter-btn">搜尋</button>
@@ -438,13 +438,17 @@ tr:hover td{background:#fafafa;}
           <button class="btn bp" style="font-size:12px;" id="dm-search-btn">查詢</button>
           <button class="btn" style="font-size:12px;" id="dm-all-btn">顯示全部</button>
         </div>
-        <div id="dm-count" style="font-size:12px;color:#6b7280;margin-bottom:8px;"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <div id="dm-count" style="font-size:12px;color:#6b7280;"></div>
+          <button class="btn" style="font-size:12px;color:#dc2626;border-color:#fca5a5;" onclick="window._batchDelDrugs()">刪除勾選</button>
+        </div>
         <div style="overflow-x:auto;">
           <table style="width:100%;min-width:480px;">
             <thead><tr>
-              <th>庫存碼</th><th>藥品台大碼</th><th>商品名</th><th>管制級別</th><th>單位</th>
+              <th><input type="checkbox" id="chk-all-drugs" onchange="document.querySelectorAll('.drug-chk').forEach(function(c){c.checked=document.getElementById('chk-all-drugs').checked;})"/></th>
+              <th>庫存碼</th><th>藥品台大碼</th><th>商品名</th><th>管制級別</th><th>單位</th><th>操作</th>
             </tr></thead>
-            <tbody id="dm-tbody"><tr><td colspan="5" style="text-align:center;padding:20px;color:#9ca3af;">請輸入關鍵字或點「顯示全部」</td></tr></tbody>
+            <tbody id="dm-tbody"><tr><td colspan="7" style="text-align:center;padding:20px;color:#9ca3af;">請輸入關鍵字或點「顯示全部」</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -543,7 +547,7 @@ async function del2(t,m){var r=await req(t+"?"+m,{o:{method:"DELETE"}});return r
 
 var CU=null,PQ=null,PD=null,LK=false;
 var CL={douliou:"斗六院區",huwei:"虎尾院區"};
-var ROLE_LABEL={pharmacist:"一般藥師",warehouse:"藥庫藥師",admin:"管理員"};
+var ROLE_LABEL={pharmacist:"一般",warehouse:"藥庫",admin:"管理員"};
 
 function g(id){return document.getElementById(id);}
 function sh(id){g(id).classList.remove("hide");}
@@ -723,7 +727,7 @@ async function login(){
   if((u.password_hash||"").toLowerCase()!==pw){er.textContent="密碼錯誤";er.classList.remove("hide");return;}
   CU=u; hi("ls"); sh("as");
   var cl=lc==="douliou"?"bdl":"bhw",lb=CL[lc];
-  var roleLabel=ROLE_LABEL[u.role]||"一般藥師";
+  var roleLabel=ROLE_LABEL[u.role]||"一般";
   g("hu").innerHTML=ei+" "+u.name+' <span class="bdg '+cl+'">'+lb+'</span> <span class="bdg bgn">'+roleLabel+'</span>';
   // Show tabs based on role
   if(u.role==="warehouse"||u.role==="admin"){sh("np");}
@@ -1359,8 +1363,8 @@ async function loadUsers(campusFilter,roleFilter,searchKw){
         +'</select></td>'
         +'<td style="padding:6px 4px;">'
         +'<select id="sel-rl-'+u.id+'" class="inp" style="width:auto;font-size:11px;padding:2px 6px;">'
-        +'<option value="pharmacist"'+(u.role==="pharmacist"?" selected":"")+'>一般藥師</option>'
-        +'<option value="warehouse"'+(u.role==="warehouse"?" selected":"")+'>藥庫藥師</option>'
+        +'<option value="pharmacist"'+(u.role==="pharmacist"?" selected":"")+'>一般</option>'
+        +'<option value="warehouse"'+(u.role==="warehouse"?" selected":"")+'>藥庫</option>'
         +'<option value="admin"'+(u.role==="admin"?" selected":"")+'>管理員</option>'
         +'</select></td>'
         +'<td style="padding:6px 4px;">'
@@ -1434,7 +1438,7 @@ async function addUser(){
 
 // ── CSV 批次匯入 ──────────────────────────────────────────
 var CAMPUS_MAP={"斗六":"douliou","虎尾":"huwei","douliou":"douliou","huwei":"huwei"};
-var ROLE_MAP={"一般藥師":"pharmacist","藥庫藥師":"warehouse","管理員":"admin","pharmacist":"pharmacist","warehouse":"warehouse","admin":"admin"};
+var ROLE_MAP={"一般藥師":"pharmacist","藥庫藥師":"warehouse","一般":"pharmacist","藥庫":"warehouse","管理員":"admin","pharmacist":"pharmacist","warehouse":"warehouse","admin":"admin"};
 
 async function csvImportUsers(){
   var raw=g("csv-input").value.trim();
@@ -1447,7 +1451,7 @@ async function csvImportUsers(){
     if(parts.length<4){errors.push("第"+(i+1)+"行格式不符："+line);return;}
     var cp=CAMPUS_MAP[parts[2]],rl=ROLE_MAP[parts[3]];
     if(!cp){errors.push("第"+(i+1)+"行院區不正確（需填斗六或虎尾）："+parts[2]);return;}
-    if(!rl){errors.push("第"+(i+1)+"行角色不正確（需填一般藥師/藥庫藥師/管理員）："+parts[3]);return;}
+    if(!rl){errors.push("第"+(i+1)+"行角色不正確（需填一般/藥庫/管理員）："+parts[3]);return;}
     records.push({emp_id:parts[0],name:parts[1],campus:cp,role:rl,password_hash:parts[0],is_active:true});
   });
   if(errors.length){st.textContent="格式錯誤："+errors.join("；");st.style.color="#dc2626";return;}
@@ -1527,7 +1531,7 @@ async function searchDrugMaster(all){
   var kw=all?"":g("dm-kw").value.trim();
   var cf=g("dm-ctrl").value;
   var tb=g("dm-tbody"),cnt=g("dm-count");
-  tb.innerHTML='<tr><td colspan="5" style="text-align:center;padding:14px;color:#9ca3af;">載入中...</td></tr>';
+  tb.innerHTML='<tr><td colspan="7" style="text-align:center;padding:14px;color:#9ca3af;">載入中...</td></tr>';
 
   var qs="select=stock_code,drug_code,name,ctrl_level,unit&order=stock_code.asc";
   if(!all) qs+="&limit=200"; else qs+="&limit=2000";
@@ -1544,7 +1548,7 @@ async function searchDrugMaster(all){
 
   var data=await sel("drugs",qs);
   if(!Array.isArray(data)||!data.length){
-    tb.innerHTML='<tr><td colspan="5" style="text-align:center;padding:14px;color:#9ca3af;">查無資料</td></tr>';
+    tb.innerHTML='<tr><td colspan="7" style="text-align:center;padding:14px;color:#9ca3af;">查無資料</td></tr>';
     cnt.textContent=""; return;
   }
   cnt.textContent="共 "+data.length+" 筆"+(data.length>=200&&!all?"（顯示前200筆，點「顯示全部」載入所有資料）":"");
@@ -1554,11 +1558,46 @@ async function searchDrugMaster(all){
       :(cl==="1"||cl==="2")?'<span class="bdg bc1">管'+cl+'</span>'
       :(cl==="4")?'<span class="bdg" style="background:#DBEAFE;color:#1e40af;">管4</span>'
       :'<span class="bdg bc3">管'+cl+'</span>';
-    return "<tr><td class='mn'>"+d.stock_code+"</td><td class='mn'>"+d.drug_code+"</td>"
-      +"<td style='max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;' title='"+tc(d.name).replace(/'/g,"&#39;")+"'>"+tc(d.name)+"</td>"
-      +"<td>"+cb+"</td><td class='mn'>"+d.unit+"</td></tr>";
+    var dc=d.drug_code.replace(/'/g,"\\'");
+    var nm=tc(d.name).replace(/'/g,"\\'");
+    return "<tr>"
+      +"<td><input type='checkbox' class='drug-chk' data-dc='"+dc+"'/></td>"
+      +"<td class='mn'>"+d.stock_code+"</td><td class='mn'>"+d.drug_code+"</td>"
+      +"<td style='max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;' title='"+tc(d.name).replace(/'/g,"&#39;")+"'>"+tc(d.name)+"</td>"
+      +"<td>"+cb+"</td><td class='mn'>"+d.unit+"</td>"
+      +"<td><button class='btn' style='font-size:11px;padding:2px 7px;color:#dc2626;border-color:#fca5a5;' onclick=\"window._delDrug('"+dc+"','"+nm+"')\">刪除</button></td>"
+      +"</tr>";
   }).join("");
+  // 全選checkbox重置
+  var chkAll=document.getElementById("chk-all-drugs");
+  if(chkAll) chkAll.checked=false;
 }
+
+// ── Drug delete ───────────────────────────────────────────
+window._delDrug=function(dc,nm){
+  g("del-msg").textContent="確定刪除藥品「"+nm+"」（"+dc+"）？刪除後無法復原。";
+  window._delCb=async function(){
+    await del2("drugs","drug_code=eq."+encodeURIComponent(dc));
+    showToast("已刪除："+nm,"ok");
+    searchDrugMaster(false);
+  };
+  sh("del-modal");
+};
+
+window._batchDelDrugs=function(){
+  var checked=document.querySelectorAll(".drug-chk:checked");
+  if(!checked.length){alert("請先勾選要刪除的藥品");return;}
+  var dcs=Array.from(checked).map(function(c){return c.getAttribute("data-dc");});
+  g("del-msg").textContent="確定刪除勾選的 "+dcs.length+" 筆藥品？刪除後無法復原。";
+  window._delCb=async function(){
+    for(var i=0;i<dcs.length;i++){
+      await del2("drugs","drug_code=eq."+encodeURIComponent(dcs[i]));
+    }
+    showToast("已刪除 "+dcs.length+" 筆藥品","ok");
+    searchDrugMaster(false);
+  };
+  sh("del-modal");
+};
 
 async function impDrugsMaster(){
   var f=g("dm-file").files[0];
@@ -1649,19 +1688,59 @@ async function searchDrugs(){
 
   var total=data.length;
   el.style.color="#111";
-  el.innerHTML='<div style="margin-bottom:6px;font-size:12px;color:#6b7280;">找到 '+total+' 筆'+(total>=100?"（最多顯示100筆，請縮小範圍）":"")+'</div>'
+  el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">'
+    +'<span style="font-size:12px;color:#6b7280;">找到 '+total+' 筆'+(total>=100?"（最多顯示100筆，請縮小範圍）":"")+'</span>'
+    +'<button class="btn" style="font-size:12px;color:#dc2626;border-color:#fca5a5;" onclick="window._batchDelDrugs()">刪除勾選</button>'
+    +'</div>'
     +'<div style="overflow-x:auto;"><table style="width:100%;min-width:400px;">'
-    +'<thead><tr><th>庫存碼</th><th>藥品台大碼</th><th>商品名</th><th>管制</th><th>單位</th></tr></thead>'
+    +'<thead><tr>'
+    +'<th><input type="checkbox" id="chk-all-drugs" onchange="document.querySelectorAll(\'.drug-chk\').forEach(function(c){c.checked=document.getElementById(\'chk-all-drugs\').checked;})"/></th>'
+    +'<th>庫存碼</th><th>藥品台大碼</th><th>商品名</th><th>管制</th><th>單位</th><th>操作</th>'
+    +'</tr></thead>'
     +'<tbody>'
     +data.map(function(d){
       var cl=d.ctrl_level;
       var cb=(cl==="0")?'<span class="bdg bgn">一般</span>':(cl==="1"||cl==="2")?'<span class="bdg bc1">管'+cl+'</span>':(cl==="4")?'<span class="bdg" style="background:#DBEAFE;color:#1e40af;">管4</span>':'<span class="bdg bc3">管'+cl+'</span>';
-      return "<tr><td class='mn'>"+d.stock_code+"</td><td class='mn'>"+d.drug_code+"</td>"
-        +"<td style='max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;' title='"+tc(d.name)+"'>"+tc(d.name)+"</td>"
-        +"<td>"+cb+"</td><td class='mn'>"+d.unit+"</td></tr>";
+      var dc=d.drug_code.replace(/'/g,"\\'");
+      var nm=tc(d.name).replace(/'/g,"\\'");
+      return "<tr>"
+        +"<td><input type='checkbox' class='drug-chk' data-dc='"+dc+"'/></td>"
+        +"<td class='mn'>"+d.stock_code+"</td>"
+        +"<td class='mn'>"+d.drug_code+"</td>"
+        +"<td style='max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;' title='"+tc(d.name)+"'>"+tc(d.name)+"</td>"
+        +"<td>"+cb+"</td>"
+        +"<td class='mn'>"+d.unit+"</td>"
+        +"<td><button class='btn' style='font-size:11px;padding:2px 7px;color:#dc2626;border-color:#fca5a5;' onclick=\"window._delDrug('\"+dc+\"','\"+nm+\"')\">刪除</button></td>"
+        +"</tr>";
     }).join("")
     +'</tbody></table></div>';
 }
+
+// ── Drug delete ───────────────────────────────────────────
+window._delDrug=function(dc,nm){
+  g("del-msg").textContent="確定刪除藥品「"+nm+"」（"+dc+"）？刪除後無法復原。";
+  window._delCb=async function(){
+    await del2("drugs","drug_code=eq."+encodeURIComponent(dc));
+    showToast("已刪除："+nm,"ok");
+    searchDrugs();
+  };
+  sh("del-modal");
+};
+
+window._batchDelDrugs=function(){
+  var checked=document.querySelectorAll(".drug-chk:checked");
+  if(!checked.length){alert("請先勾選要刪除的藥品");return;}
+  var dcs=Array.from(checked).map(function(c){return c.getAttribute("data-dc");});
+  g("del-msg").textContent="確定刪除勾選的 "+dcs.length+" 筆藥品？刪除後無法復原。";
+  window._delCb=async function(){
+    for(var i=0;i<dcs.length;i++){
+      await del2("drugs","drug_code=eq."+encodeURIComponent(dcs[i]));
+    }
+    showToast("已刪除 "+dcs.length+" 筆藥品","ok");
+    searchDrugs();
+  };
+  sh("del-modal");
+};
 
 // ── Pending records ───────────────────────────────────────
 async function loadPending(){
