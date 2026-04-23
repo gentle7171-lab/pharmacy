@@ -268,7 +268,7 @@ tr:hover td{background:#fafafa;}
 
       <div class="card" style="margin-bottom:10px;padding:16px 18px;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
-          <div><div style="font-size:14px;font-weight:600;letter-spacing:0.5px;">管一二級報表（日）</div><div style="font-size:12px;color:#6b7280;margin-top:4px;letter-spacing:0.3px;">逐筆明細</div></div>
+          <div><div style="font-size:14px;font-weight:600;letter-spacing:0.5px;">管一二級報表</div><div style="font-size:12px;color:#6b7280;margin-top:4px;letter-spacing:0.3px;">逐筆明細</div></div>
           <span class="bdg bc1">逐筆</span>
         </div>
         <div style="display:flex;gap:10px;">
@@ -295,7 +295,7 @@ tr:hover td{background:#fafafa;}
 
       <div class="card" style="margin-bottom:10px;padding:16px 18px;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
-          <div><div style="font-size:14px;font-weight:600;letter-spacing:0.5px;">管三級報表（日）</div><div style="font-size:12px;color:#6b7280;margin-top:4px;letter-spacing:0.3px;">逐筆明細</div></div>
+          <div><div style="font-size:14px;font-weight:600;letter-spacing:0.5px;">管三級報表</div><div style="font-size:12px;color:#6b7280;margin-top:4px;letter-spacing:0.3px;">逐筆明細</div></div>
           <span class="bdg bc3">逐筆</span>
         </div>
         <div style="display:flex;gap:10px;">
@@ -322,8 +322,8 @@ tr:hover td{background:#fafafa;}
 
       <div class="card" style="margin-bottom:10px;padding:16px 18px;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
-          <div><div style="font-size:14px;font-weight:600;letter-spacing:0.5px;">管四級報表（日）</div><div style="font-size:12px;color:#6b7280;margin-top:4px;letter-spacing:0.3px;">逐筆明細</div></div>
-          <span class="bdg" style="background:#DBEAFE;color:#1e40af;">逐筆</span>
+          <div><div style="font-size:14px;font-weight:600;letter-spacing:0.5px;">管四級報表</div><div style="font-size:12px;color:#6b7280;margin-top:4px;letter-spacing:0.3px;">明細 + 淨額統計</div></div>
+          <span class="bdg" style="background:#DBEAFE;color:#1e40af;">淨額</span>
         </div>
         <div style="display:flex;gap:10px;">
           <button class="btn bp" style="font-size:12px;padding:7px 16px;letter-spacing:0.3px;" id="ec4">匯出 Excel</button>
@@ -341,7 +341,7 @@ tr:hover td{background:#fafafa;}
         </div>
         <div style="overflow-x:auto;">
           <table style="min-width:780px;">
-            <thead><tr><th><input type="checkbox" id="chk-all-c4" title="全選"/></th><th>時間</th><th>病歷號</th><th>領藥號</th><th>藥品台大碼</th><th>庫存碼</th><th>商品名</th><th>數量</th><th>開方</th><th>領藥</th><th>核對狀態</th><th>核對人員／時間</th></tr></thead>
+            <thead><tr><th><input type="checkbox" id="chk-all-c4" title="全選"/></th><th>藥品台大碼</th><th>庫存碼</th><th>商品名</th><th>斗六→虎尾</th><th>虎尾→斗六</th><th>淨額</th><th>核對狀態</th><th>核對人員／時間</th></tr></thead>
             <tbody id="vtb-c4"></tbody>
           </table>
         </div>
@@ -653,20 +653,25 @@ async function checkPending(){
 }
 
 async function checkCtrlDrugs(){
-  // 檢查當日是否有未核對的管一二三級
-  var td=new Date().toISOString().slice(0,10);
   var cnt=await sel("dispensing_records",
-    "verified=eq.false&ctrl_level=in.(1,2,3)&dispensed_at=gte."+td+"T00:00:00&dispensed_at=lte."+td+"T23:59:59&select=id",true);
+    "verified=eq.false&ctrl_level=in.(1,2,3,4)&select=id",true);
   var badge=g("ctrl-badge");
   if(cnt>0){
     sh("ctrl-badge");
-    // 跳出通知視窗
     if(CU&&(CU.role==="warehouse"||CU.role==="admin")){
-      var c12=await sel("dispensing_records","verified=eq.false&ctrl_level=in.(1,2)&dispensed_at=gte."+td+"T00:00:00&dispensed_at=lte."+td+"T23:59:59&select=id",true);
-      var c3=await sel("dispensing_records","verified=eq.false&ctrl_level=eq.3&dispensed_at=gte."+td+"T00:00:00&dispensed_at=lte."+td+"T23:59:59&select=id",true);
+      var c12=await sel("dispensing_records","verified=eq.false&ctrl_level=in.(1,2)&select=id,dispensed_at");
+      var c3=await sel("dispensing_records","verified=eq.false&ctrl_level=eq.3&select=id,dispensed_at");
+      var c4raw=await sel("dispensing_records","verified=eq.false&ctrl_level=eq.4&select=drug_code,dispensed_at");
+      var c4drugs=[...new Set((c4raw||[]).map(function(r){return r.drug_code;}))].length;
+      function getDates(arr){
+        if(!arr||!arr.length) return "";
+        var dates=[...new Set(arr.map(function(r){return r.dispensed_at?r.dispensed_at.slice(5,10).replace("-","/"):"";}))].filter(Boolean).sort();
+        return dates.length?"（"+dates.join("、")+"）":"";
+      }
       var parts=[];
-      if(c12>0) parts.push("管一二級 "+c12+" 筆");
-      if(c3>0) parts.push("管三級 "+c3+" 筆");
+      if(c12&&c12.length) parts.push("管一二級 "+c12.length+" 筆"+getDates(c12));
+      if(c3&&c3.length) parts.push("管三級 "+c3.length+" 筆"+getDates(c3));
+      if(c4drugs>0) parts.push("管四級 "+c4drugs+" 項"+getDates(c4raw));
       showCtrlNotify(parts.join("、"));
     }
   } else {
@@ -684,7 +689,7 @@ function showCtrlNotify(detail){
   }
   el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">'
     +'<div><div style="font-weight:600;color:#dc2626;margin-bottom:5px;">⚠ 管制藥品待核對</div>'
-    +'<div style="color:#374151;font-size:12px;">今日有 <strong>'+detail+'</strong> 尚未核對，請前往報表頁面核對。</div></div>'
+    +'<div style="color:#374151;font-size:12px;">有 <strong>'+detail+'</strong> 尚未核對，請前往報表頁面核對。</div></div>'
     +'<button onclick="window._closeCtrlNotify()" style="border:none;background:none;cursor:pointer;font-size:16px;color:#9ca3af;flex-shrink:0;">×</button>'
     +'</div>'
     +'<div style="margin-top:10px;display:flex;gap:6px;">'
@@ -703,9 +708,10 @@ window.goToCtrlVerify=async function(){
   window._closeCtrlNotify();
   tab("p");
   setTimeout(async function(){
-    var td=new Date().toISOString().slice(0,10);
-    var c12=await sel("dispensing_records","verified=eq.false&ctrl_level=in.(1,2)&dispensed_at=gte."+td+"T00:00:00&dispensed_at=lte."+td+"T23:59:59&select=id",true);
-    var c3=await sel("dispensing_records","verified=eq.false&ctrl_level=eq.3&dispensed_at=gte."+td+"T00:00:00&dispensed_at=lte."+td+"T23:59:59&select=id",true);
+    var c12=await sel("dispensing_records","verified=eq.false&ctrl_level=in.(1,2)&select=id",true);
+    var c3=await sel("dispensing_records","verified=eq.false&ctrl_level=eq.3&select=id",true);
+    var c4raw=await sel("dispensing_records","verified=eq.false&ctrl_level=eq.4&select=drug_code");
+    var c4=[...new Set((c4raw||[]).map(function(r){return r.drug_code;}))].length;
     if(c12>0){
       var p=document.getElementById("verify-panel-c1");
       if(p&&p.classList.contains("hide")) toggleVerify("verify-panel-c1","c12");
@@ -714,6 +720,10 @@ window.goToCtrlVerify=async function(){
       var p3=document.getElementById("verify-panel-c3");
       if(p3&&p3.classList.contains("hide")) toggleVerify("verify-panel-c3","c3");
       setTimeout(function(){p3&&p3.scrollIntoView({behavior:"smooth",block:"start"});},400);
+    } else if(c4>0){
+      var p4=document.getElementById("verify-panel-c4");
+      if(p4&&p4.classList.contains("hide")) toggleVerify("verify-panel-c4","c4");
+      setTimeout(function(){p4&&p4.scrollIntoView({behavior:"smooth",block:"start"});},400);
     }
   },300);
 };
@@ -1119,14 +1129,60 @@ async function expCtrlSheet(tp){
   var dates=getRptDates();
   var rows=await fetchRpt(tp);
   if(!rows||!rows.length){alert("查無資料");return;}
-  var fn=(tp==="c12"?"管一二級":tp==="c4"?"管四級":"管三級")+"日報表_"+dates.sd+(dates.sd!==dates.ed?"_至_"+dates.ed:"")+".xlsx";
-  loadXLSX(function(){
-    var ws=[["操作時間","開方日期","病患帳號","病歷號","領藥號","藥品台大碼","庫存碼","商品名","管制級別","數量","單位","開方院區","領藥院區","操作藥師","核對狀態","核對人員","核對時間"]];
-    rows.forEach(function(r){ws.push([new Date(r.dispensed_at).toLocaleString("zh-TW"),r.prescription_date||"",r.patient_account,r.patient_id,r.dispense_no,r.drug_code,r.stock_code,r.drug_name,"管"+r.ctrl_level,r.quantity,r.drug_unit,CL[r.prescribe_campus],CL[r.dispense_campus],r.pharmacist_emp_id,r.verified?"已核對":"未核對",r.verified_by||"",r.verified_at?new Date(r.verified_at).toLocaleString("zh-TW"):""]);});
-    var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(ws),"明細");
-    XLSX.writeFile(wb,fn);
-  });
+  var fn=(tp==="c12"?"管一二級":tp==="c4"?"管四級":"管三級")+"報表_"+dates.sd+(dates.sd!==dates.ed?"_至_"+dates.ed:"")+".xlsx";
+  if(tp==="c4"){
+    var allVby=[...new Set(rows.filter(function(r){return r.verified&&r.verified_by;}).map(function(r){return r.verified_by;}))];
+    var nameMap=await buildNameMap(allVby);
+    loadXLSX(function(){
+      var nm={};
+      rows.forEach(function(r){
+        if(!nm[r.drug_code])nm[r.drug_code]={dc:r.drug_code,sc:r.stock_code,n:r.drug_name,u:r.drug_unit,
+          dl_ver:0,hw_ver:0,dl_unver:0,hw_unver:0,vby:r.verified_by,vat:r.verified_at};
+        var isDL=r.prescribe_campus==="douliou"&&r.dispense_campus==="huwei";
+        var isHW=r.prescribe_campus==="huwei"&&r.dispense_campus==="douliou";
+        if(r.verified){
+          if(isDL) nm[r.drug_code].dl_ver+=r.quantity;
+          else if(isHW) nm[r.drug_code].hw_ver+=r.quantity;
+          nm[r.drug_code].vby=r.verified_by; nm[r.drug_code].vat=r.verified_at;
+        } else {
+          if(isDL) nm[r.drug_code].dl_unver+=r.quantity;
+          else if(isHW) nm[r.drug_code].hw_unver+=r.quantity;
+        }
+      });
+      var net=[["藥品台大碼","庫存碼","商品名","單位","斗六→虎尾","虎尾→斗六","淨額方向","淨額","核對狀態","核對人員","核對時間"]];
+      Object.values(nm).forEach(function(i){
+        if(i.dl_unver>0||i.hw_unver>0){var u=i.dl_unver-i.hw_unver;net.push([i.dc,i.sc,i.n,i.u,i.dl_unver,i.hw_unver,u>0?"斗六→虎尾":u<0?"虎尾→斗六":"持平",Math.abs(u),"未核對","",""]);};
+        if(i.dl_ver>0||i.hw_ver>0){var v=i.dl_ver-i.hw_ver;net.push([i.dc,i.sc,i.n,i.u,i.dl_ver,i.hw_ver,v>0?"斗六→虎尾":v<0?"虎尾→斗六":"持平",Math.abs(v),"已核對",nameMap[i.vby]||i.vby||"",i.vat?new Date(i.vat).toLocaleString("zh-TW"):""]);};
+      });
+      var det=[["刷碼時間","病歷號","領藥號","藥品台大碼","庫存碼","商品名","數量","單位","開方院區","領藥院區","操作藥師","核對狀態","核對人員","核對時間"]];
+      rows.forEach(function(r){det.push([r.dispensed_at?new Date(r.dispensed_at).toLocaleString("zh-TW"):"",r.patient_id||"",r.dispense_no||"",r.drug_code||"",r.stock_code||"",r.drug_name||"",r.quantity,r.drug_unit||"",CL[r.prescribe_campus]||"",CL[r.dispense_campus]||"",r.pharmacist_emp_id||"",r.verified?"已核對":"未核對",r.verified?(nameMap[r.verified_by]||r.verified_by||""):"",r.verified_at?new Date(r.verified_at).toLocaleString("zh-TW"):""]);});
+      var wb=XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(net),"淨額統計");
+      XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(det),"核對明細");
+      XLSX.writeFile(wb,fn);
+    });
+  } else {
+    loadXLSX(function(){
+      var ws=[["操作時間","開方日期","病患帳號","病歷號","領藥號","藥品台大碼","庫存碼","商品名","管制級別","數量","單位","開方院區","領藥院區","操作藥師","核對狀態","核對人員","核對時間"]];
+      rows.forEach(function(r){ws.push([new Date(r.dispensed_at).toLocaleString("zh-TW"),r.prescription_date||"",r.patient_account,r.patient_id,r.dispense_no,r.drug_code,r.stock_code,r.drug_name,"管"+r.ctrl_level,r.quantity,r.drug_unit,CL[r.prescribe_campus],CL[r.dispense_campus],r.pharmacist_emp_id,r.verified?"已核對":"未核對",r.verified_by||"",r.verified_at?new Date(r.verified_at).toLocaleString("zh-TW"):""]);});
+      var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(ws),"明細");
+      XLSX.writeFile(wb,fn);
+    });
+  }
 }
+
+async function verifyByIds(idsStr,tp){
+  var ids=idsStr.split(",").filter(Boolean);
+  if(!ids.length) return;
+  var now=new Date().toISOString();
+  for(var i=0;i<ids.length;i++){
+    await upd("dispensing_records","id=eq."+ids[i],{verified:true,verified_by:CU.emp_id,verified_at:now});
+  }
+  showToast("已核對 "+ids.length+" 筆","ok");
+  var panelId=tp==="c4"?"verify-panel-c4":"verify-panel";
+  hi(panelId); setTimeout(function(){toggleVerify(panelId,tp||"g");},100);
+}
+window.verifyByIds=verifyByIds;
 
 
 
@@ -1217,13 +1273,86 @@ async function toggleVerify(panelId,tp){
     tb.innerHTML=rows2.join("");
     var chkAllG=g("chk-all-g");
     if(chkAllG) chkAllG.onchange=function(){document.querySelectorAll(".vchk-g").forEach(function(c){c.checked=chkAllG.checked;});};
+  } else if(tp==="c4"){
+    var nm4={};
+    (rows||[]).forEach(function(r){
+      if(!nm4[r.drug_code])nm4[r.drug_code]={dc:r.drug_code,sc:r.stock_code,n:r.drug_name,u:r.drug_unit,
+        dl_ver:0,hw_ver:0,dl_unver:0,hw_unver:0,unver_ids:[],ver_records:[]};
+      var isDL=r.prescribe_campus==="douliou"&&r.dispense_campus==="huwei";
+      var isHW=r.prescribe_campus==="huwei"&&r.dispense_campus==="douliou";
+      if(r.verified){
+        if(isDL) nm4[r.drug_code].dl_ver+=r.quantity;
+        else if(isHW) nm4[r.drug_code].hw_ver+=r.quantity;
+        nm4[r.drug_code].ver_records.push({
+          pid:r.patient_id||"",dn:r.dispense_no||"",qty:r.quantity,unit:r.drug_unit,
+          pc:r.prescribe_campus,dc2:r.dispense_campus,
+          dat:r.dispensed_at||"",vby:r.verified_by||"",vat:r.verified_at||""
+        });
+      } else {
+        if(isDL) nm4[r.drug_code].dl_unver+=r.quantity;
+        else if(isHW) nm4[r.drug_code].hw_unver+=r.quantity;
+        nm4[r.drug_code].unver_ids.push(r.id);
+      }
+    });
+    var tb4=g("vtb-c4");
+    if(!Object.keys(nm4).length){tb4.innerHTML='<tr><td colspan="9" style="text-align:center;padding:12px;color:#9ca3af;">查無資料</td></tr>';return;}
+    var allVby4=[...new Set(Object.values(nm4).flatMap(function(i){return i.ver_records.map(function(r){return r.vby;}).filter(Boolean);}))];
+    var nameMap4=await buildNameMap(allVby4);
+    var rows4=[];
+    Object.values(nm4).forEach(function(i){
+      if(i.dl_unver>0||i.hw_unver>0){
+        var u=i.dl_unver-i.hw_unver;
+        var uDir=u>0?"斗六→虎尾":u<0?"虎尾→斗六":"持平";
+        var idsAttr=i.unver_ids.join(",");
+        var chk='<input type="checkbox" class="vchk-c4" data-ids="'+idsAttr+'" style="cursor:pointer;"/>';
+        var vbtn=(CU.role==="warehouse"||CU.role==="admin")
+          ?'<button class="btn" style="font-size:11px;padding:2px 7px;color:#059669;border-color:#6ee7b7;" onclick="verifyByIds(\''+idsAttr+'\',\'c4\')">核對</button>'
+          :'';
+        rows4.push("<tr style='background:#FFFBEB;'>"
+          +"<td>"+chk+"</td><td class='mn'>"+i.dc+"</td><td class='mn'>"+i.sc+"</td><td>"+tc(i.n)+"</td>"
+          +"<td style='text-align:right;'>"+i.dl_unver+"</td><td style='text-align:right;'>"+i.hw_unver+"</td>"
+          +"<td style='white-space:nowrap;'>"+uDir+" "+Math.abs(u)+"</td>"
+          +"<td style='white-space:nowrap;'><span class='bdg bwn' style='font-size:10px;white-space:nowrap;'>未核對</span></td>"
+          +"<td>"+vbtn+"</td></tr>");
+      }
+      if(i.dl_ver>0||i.hw_ver>0){
+        var v=i.dl_ver-i.hw_ver;
+        var vDir=v>0?"斗六→虎尾":v<0?"虎尾→斗六":"持平";
+        var safeId="vdet4_"+i.dc.replace(/[^a-zA-Z0-9]/g,"_");
+        rows4.push("<tr style='cursor:pointer;' onclick=\"var els=document.querySelectorAll('."+safeId+"');var show=els[0]&&els[0].style.display==='none';els.forEach(function(e){e.style.display=show?'':'none';});this.querySelector('.expand-arrow').textContent=show?'▼':'▶';\">"
+          +"<td></td><td class='mn'>"+i.dc+"</td><td class='mn'>"+i.sc+"</td><td>"+tc(i.n)+"</td>"
+          +"<td style='text-align:right;'>"+i.dl_ver+"</td><td style='text-align:right;'>"+i.hw_ver+"</td>"
+          +"<td style='white-space:nowrap;'>"+vDir+" "+Math.abs(v)+"</td>"
+          +"<td style='white-space:nowrap;'><span class='bdg ag' style='font-size:10px;white-space:nowrap;'>已核對</span></td>"
+          +"<td style='font-size:11px;color:#6b7280;white-space:nowrap;'><span class='expand-arrow'>▶</span> 展開 "+i.ver_records.length+" 筆</td>"
+          +"</tr>");
+        i.ver_records.forEach(function(r){
+          var pDir=(r.pc==="douliou"?"斗六":"虎尾")+"→"+(r.dc2==="douliou"?"斗六":"虎尾");
+          var vName=nameMap4[r.vby]||r.vby;
+          var dispTime=r.dat?new Date(r.dat).toLocaleDateString("zh-TW")+" "+new Date(r.dat).toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit"}):"";
+          var vTime=r.vat?new Date(r.vat).toLocaleDateString("zh-TW")+" "+new Date(r.vat).toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit"}):"";
+          rows4.push("<tr class='"+safeId+"' style='display:none;background:#F0FDF4;'>"
+            +"<td></td><td class='mn' style='font-size:11px;color:#6b7280;padding-left:16px;'>└</td>"
+            +"<td class='mn' style='font-size:11px;'>"+shortDispNo(r.dn)+"</td>"
+            +"<td style='font-size:11px;color:#374151;'>病歷 <span class='mn'>"+r.pid+"</span></td>"
+            +"<td colspan='2' style='font-size:11px;text-align:right;'>×"+r.qty+" "+r.unit+" "+pDir+"</td>"
+            +"<td style='font-size:11px;color:#6b7280;white-space:nowrap;'>刷碼 "+dispTime+"</td>"
+            +"<td style='font-size:11px;color:#059669;white-space:nowrap;'>"+vName+"</td>"
+            +"<td style='font-size:11px;color:#6b7280;white-space:nowrap;'>核對 "+vTime+"</td>"
+            +"</tr>");
+        });
+      }
+    });
+    tb4.innerHTML=rows4.join("");
+    var chkAll4=g("chk-all-c4");
+    if(chkAll4) chkAll4.onchange=function(){document.querySelectorAll(".vchk-c4").forEach(function(c){c.checked=chkAll4.checked;});};
   } else {
-    var tbid=tp==="c12"?"vtb-c1":tp==="c4"?"vtb-c4":"vtb-c3";
+    var tbid=tp==="c12"?"vtb-c1":"vtb-c3";
     var tb2=g(tbid);
     if(!rows||!rows.length){tb2.innerHTML='<tr><td colspan="12" style="text-align:center;padding:12px;color:#9ca3af;">查無資料</td></tr>';return;}
     var empIds2=[...new Set(rows.filter(function(r){return r.verified_by;}).map(function(r){return r.verified_by;}))];
     var nameMap2=await buildNameMap(empIds2);
-    var tpShort=tp==="c12"?"c1":tp==="c4"?"c4":"c3";
+    var tpShort=tp==="c12"?"c1":"c3";
     tb2.innerHTML=rows.map(function(r){
       var dt2=new Date(r.dispensed_at);
       var t='<div style="font-size:11px;">'+dt2.toLocaleDateString("zh-TW",{month:"2-digit",day:"2-digit"})+'</div><div style="font-size:10px;color:#6b7280;">'+dt2.toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit"})+'</div>';
