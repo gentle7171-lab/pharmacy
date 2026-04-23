@@ -1552,6 +1552,8 @@ async function searchDrugMaster(all){
     cnt.textContent=""; return;
   }
   cnt.textContent="共 "+data.length+" 筆"+(data.length>=200&&!all?"（顯示前200筆，點「顯示全部」載入所有資料）":"");
+  var chkAll=document.getElementById("chk-all-drugs");
+  if(chkAll) chkAll.checked=false;
   tb.innerHTML=data.map(function(d){
     var cl=d.ctrl_level;
     var cb=(cl==="0")?'<span class="bdg bgn">一般</span>'
@@ -1568,36 +1570,7 @@ async function searchDrugMaster(all){
       +"<td><button class='btn' style='font-size:11px;padding:2px 7px;color:#dc2626;border-color:#fca5a5;' onclick=\"window._delDrug('"+dc+"','"+nm+"')\">刪除</button></td>"
       +"</tr>";
   }).join("");
-  // 全選checkbox重置
-  var chkAll=document.getElementById("chk-all-drugs");
-  if(chkAll) chkAll.checked=false;
 }
-
-// ── Drug delete ───────────────────────────────────────────
-window._delDrug=function(dc,nm){
-  g("del-msg").textContent="確定刪除藥品「"+nm+"」（"+dc+"）？刪除後無法復原。";
-  window._delCb=async function(){
-    await del2("drugs","drug_code=eq."+encodeURIComponent(dc));
-    showToast("已刪除："+nm,"ok");
-    searchDrugMaster(false);
-  };
-  sh("del-modal");
-};
-
-window._batchDelDrugs=function(){
-  var checked=document.querySelectorAll(".drug-chk:checked");
-  if(!checked.length){alert("請先勾選要刪除的藥品");return;}
-  var dcs=Array.from(checked).map(function(c){return c.getAttribute("data-dc");});
-  g("del-msg").textContent="確定刪除勾選的 "+dcs.length+" 筆藥品？刪除後無法復原。";
-  window._delCb=async function(){
-    for(var i=0;i<dcs.length;i++){
-      await del2("drugs","drug_code=eq."+encodeURIComponent(dcs[i]));
-    }
-    showToast("已刪除 "+dcs.length+" 筆藥品","ok");
-    searchDrugMaster(false);
-  };
-  sh("del-modal");
-};
 
 async function impDrugsMaster(){
   var f=g("dm-file").files[0];
@@ -1634,6 +1607,18 @@ async function impDrugsMaster(){
         drugs.push({stock_code:sc,drug_code:dc,name:nm,ctrl_level:cl,unit:un});
       }
       if(!drugs.length){st.textContent="讀取到 0 筆，請確認使用原始藥品主檔.xlsx";st.style.color="#dc2626";return;}
+      // 檢查 Excel 內是否有重複台大碼
+      var seenDc={},dupDcs=[];
+      drugs.forEach(function(d){
+        if(seenDc[d.drug_code]) dupDcs.push(d.drug_code);
+        else seenDc[d.drug_code]=true;
+      });
+      if(dupDcs.length){
+        var uniqDups=[...new Set(dupDcs)];
+        st.textContent="⚠️ 檔案中有重複台大碼（共 "+uniqDups.length+" 個），請修正 Excel 後重新上傳："+uniqDups.slice(0,5).join("、")+(uniqDups.length>5?"...":"");
+        st.style.color="#dc2626";
+        return;
+      }
       st.textContent="匯入 "+drugs.length+" 筆...";
       var done=0,errs=0,bs=50;
       for(var k=0;k<drugs.length;k+=bs){
@@ -1722,7 +1707,10 @@ window._delDrug=function(dc,nm){
   window._delCb=async function(){
     await del2("drugs","drug_code=eq."+encodeURIComponent(dc));
     showToast("已刪除："+nm,"ok");
-    searchDrugs();
+    var chk=document.querySelector(".drug-chk[data-dc='"+dc+"']");
+    if(chk&&chk.closest("tr")) chk.closest("tr").remove();
+    var cnt=g("dm-count");
+    if(cnt){var m=cnt.textContent.match(/\d+/);if(m)cnt.textContent=cnt.textContent.replace(/\d+/,parseInt(m[0])-1);}
   };
   sh("del-modal");
 };
@@ -1735,9 +1723,12 @@ window._batchDelDrugs=function(){
   window._delCb=async function(){
     for(var i=0;i<dcs.length;i++){
       await del2("drugs","drug_code=eq."+encodeURIComponent(dcs[i]));
+      var chk=document.querySelector(".drug-chk[data-dc='"+dcs[i]+"']");
+      if(chk&&chk.closest("tr")) chk.closest("tr").remove();
     }
     showToast("已刪除 "+dcs.length+" 筆藥品","ok");
-    searchDrugs();
+    var cnt=g("dm-count");
+    if(cnt){var m=cnt.textContent.match(/\d+/);if(m)cnt.textContent=cnt.textContent.replace(/\d+/,Math.max(0,parseInt(m[0])-dcs.length));}
   };
   sh("del-modal");
 };
