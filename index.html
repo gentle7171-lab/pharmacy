@@ -80,7 +80,7 @@ tr:hover td{background:#fafafa;}
     </div>
     <div class="card" style="padding:20px;">
       <div class="mg"><label class="lbl">員工編號</label><input class="inp" id="ei" placeholder="請輸入員編" autocomplete="off"/></div>
-      <div class="mg"><label class="lbl">密碼 <span style="font-weight:400;color:#9ca3af;">（預設與員編相同）</span></label>
+      <div class="mg"><label class="lbl">密碼</label>
         <div style="position:relative;">
           <input type="password" class="inp" id="pw" placeholder="請輸入密碼" autocomplete="current-password" style="padding-right:36px;"/>
           <button type="button" onclick="togglePwd('pw',this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);border:none;background:none;cursor:pointer;color:#9ca3af;padding:0;" title="顯示/隱藏密碼">
@@ -149,7 +149,7 @@ tr:hover td{background:#fafafa;}
           <div>急診處方兩院區共用，請手動確認<strong>開方院區</strong>及<strong>領藥院區</strong>。</div>
         </div>
         <div style="font-size:12px;margin-bottom:10px;">
-          <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f3f4f6;"><span style="color:#6b7280;">病歷號</span><span class="mn" id="e-pid"></span></div>
+          <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f3f4f6;"><span style="color:#6b7280;">代號</span><span class="mn" id="e-pid"></span></div>
           <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f3f4f6;"><span style="color:#6b7280;">領藥號</span><span class="mn" id="e-dn"></span></div>
           <div style="display:flex;justify-content:space-between;padding:4px 0;"><span style="color:#6b7280;">藥品</span><span style="font-weight:600;" id="e-nm"></span></div>
         </div>
@@ -175,7 +175,7 @@ tr:hover td{background:#fafafa;}
           <span id="ctrl-date-level-badge" class="bdg bc1">管制</span>
         </div>
         <div style="font-size:12px;margin-bottom:12px;">
-          <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #fef3c7;"><span style="color:#6b7280;">病歷號</span><span class="mn" id="cd-pid"></span></div>
+          <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #fef3c7;"><span style="color:#6b7280;">代號</span><span class="mn" id="cd-pid"></span></div>
           <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #fef3c7;"><span style="color:#6b7280;">領藥號</span><span class="mn" id="cd-dn"></span></div>
           <div style="display:flex;justify-content:space-between;padding:4px 0;"><span style="color:#6b7280;">藥品</span><span style="font-weight:600;" id="cd-nm"></span></div>
         </div>
@@ -194,7 +194,7 @@ tr:hover td{background:#fafafa;}
           <span class="bdg bwn">待更新</span>
         </div>
         <div class="al aw">找不到藥品台大碼 <strong id="unk-code"></strong>，已暫存此筆資料。系統已通知管理員更新藥品主檔。</div>
-        <div style="font-size:12px;color:#6b7280;">暫存資料：病歷號 <span id="unk-pid" class="mn"></span>，領藥號 <span id="unk-dn" class="mn"></span>，數量 <span id="unk-qty"></span></div>
+        <div style="font-size:12px;color:#6b7280;">暫存資料：代號 <span id="unk-pid" class="mn"></span>，領藥號 <span id="unk-dn" class="mn"></span>，數量 <span id="unk-qty"></span></div>
         <button class="btn" style="margin-top:10px;font-size:12px;" id="unk-ok">繼續刷碼</button>
       </div>
 
@@ -220,7 +220,7 @@ tr:hover td{background:#fafafa;}
       <div class="card" style="padding:0;overflow-x:auto;">
         <table style="min-width:780px;">
           <thead><tr>
-            <th>時間</th><th>病歷號</th><th>領藥號</th><th>台大碼</th><th>庫存碼</th><th>商品名</th><th>數量</th><th>類別</th><th>開方</th><th>領藥</th><th>藥師</th><th>操作</th>
+            <th>時間</th><th>代號</th><th>領藥號</th><th>台大碼</th><th>庫存碼</th><th>商品名</th><th>數量</th><th>類別</th><th>開方</th><th>領藥</th><th>藥師</th><th>操作</th>
           </tr></thead>
           <tbody id="rtb"><tr><td colspan="12" style="text-align:center;padding:16px;color:#9ca3af;">請選日期查詢</td></tr></tbody>
         </table>
@@ -287,7 +287,7 @@ tr:hover td{background:#fafafa;}
         </div>
         <div style="overflow-x:auto;">
           <table style="min-width:780px;">
-            <thead><tr><th><input type="checkbox" id="chk-all-c1" title="全選"/></th><th>時間</th><th>病歷號</th><th>領藥號</th><th>藥品台大碼</th><th>庫存碼</th><th>商品名</th><th>數量</th><th>開方</th><th>領藥</th><th>核對狀態</th><th>核對人員／時間</th></tr></thead>
+            <thead><tr><th><input type="checkbox" id="chk-all-c1" title="全選"/></th><th>時間</th><th>代號</th><th>領藥號</th><th>藥品台大碼</th><th>庫存碼</th><th>商品名</th><th>數量</th><th>開方</th><th>領藥</th><th>核對狀態</th><th>核對人員／時間</th></tr></thead>
             <tbody id="vtb-c1"></tbody>
           </table>
         </div>
@@ -314,7 +314,7 @@ tr:hover td{background:#fafafa;}
         </div>
         <div style="overflow-x:auto;">
           <table style="min-width:780px;">
-            <thead><tr><th><input type="checkbox" id="chk-all-c3" title="全選"/></th><th>時間</th><th>病歷號</th><th>領藥號</th><th>藥品台大碼</th><th>庫存碼</th><th>商品名</th><th>數量</th><th>開方</th><th>領藥</th><th>核對狀態</th><th>核對人員／時間</th></tr></thead>
+            <thead><tr><th><input type="checkbox" id="chk-all-c3" title="全選"/></th><th>時間</th><th>代號</th><th>領藥號</th><th>藥品台大碼</th><th>庫存碼</th><th>商品名</th><th>數量</th><th>開方</th><th>領藥</th><th>核對狀態</th><th>核對人員／時間</th></tr></thead>
             <tbody id="vtb-c3"></tbody>
           </table>
         </div>
@@ -1099,7 +1099,7 @@ async function expGen(){
       }
     });
     // Sheet2：核對明細（含刷條碼時間）
-    var det=[["刷碼時間","病歷號","領藥號","藥品台大碼","庫存碼","商品名","數量","單位","開方院區","領藥院區","操作藥師","核對狀態","核對人員","核對時間"]];
+    var det=[["刷碼時間","代號","領藥號","藥品台大碼","庫存碼","商品名","數量","單位","開方院區","領藥院區","操作藥師","核對狀態","核對人員","核對時間"]];
     rows.forEach(function(r){
       det.push([
         r.dispensed_at?new Date(r.dispensed_at).toLocaleString("zh-TW"):"",
@@ -1154,7 +1154,7 @@ async function expCtrlSheet(tp){
         if(i.dl_unver>0||i.hw_unver>0){var u=i.dl_unver-i.hw_unver;net.push([i.dc,i.sc,i.n,i.u,i.dl_unver,i.hw_unver,u>0?"斗六→虎尾":u<0?"虎尾→斗六":"持平",Math.abs(u),"未核對","",""]);};
         if(i.dl_ver>0||i.hw_ver>0){var v=i.dl_ver-i.hw_ver;net.push([i.dc,i.sc,i.n,i.u,i.dl_ver,i.hw_ver,v>0?"斗六→虎尾":v<0?"虎尾→斗六":"持平",Math.abs(v),"已核對",nameMap[i.vby]||i.vby||"",i.vat?new Date(i.vat).toLocaleString("zh-TW"):""]);};
       });
-      var det=[["刷碼時間","病歷號","領藥號","藥品台大碼","庫存碼","商品名","數量","單位","開方院區","領藥院區","操作藥師","核對狀態","核對人員","核對時間"]];
+      var det=[["刷碼時間","代號","領藥號","藥品台大碼","庫存碼","商品名","數量","單位","開方院區","領藥院區","操作藥師","核對狀態","核對人員","核對時間"]];
       rows.forEach(function(r){det.push([r.dispensed_at?new Date(r.dispensed_at).toLocaleString("zh-TW"):"",r.patient_id||"",r.dispense_no||"",r.drug_code||"",r.stock_code||"",r.drug_name||"",r.quantity,r.drug_unit||"",CL[r.prescribe_campus]||"",CL[r.dispense_campus]||"",r.pharmacist_emp_id||"",r.verified?"已核對":"未核對",r.verified?(nameMap[r.verified_by]||r.verified_by||""):"",r.verified_at?new Date(r.verified_at).toLocaleString("zh-TW"):""]);});
       var wb=XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(net),"淨額統計");
@@ -1163,7 +1163,7 @@ async function expCtrlSheet(tp){
     });
   } else {
     loadXLSX(function(){
-      var ws=[["操作時間","開方日期","病患帳號","病歷號","領藥號","藥品台大碼","庫存碼","商品名","管制級別","數量","單位","開方院區","領藥院區","操作藥師","核對狀態","核對人員","核對時間"]];
+      var ws=[["操作時間","開方日期","病患帳號","代號","領藥號","藥品台大碼","庫存碼","商品名","管制級別","數量","單位","開方院區","領藥院區","操作藥師","核對狀態","核對人員","核對時間"]];
       rows.forEach(function(r){ws.push([new Date(r.dispensed_at).toLocaleString("zh-TW"),r.prescription_date||"",r.patient_account,r.patient_id,r.dispense_no,r.drug_code,r.stock_code,r.drug_name,"管"+r.ctrl_level,r.quantity,r.drug_unit,CL[r.prescribe_campus],CL[r.dispense_campus],r.pharmacist_emp_id,r.verified?"已核對":"未核對",r.verified_by||"",r.verified_at?new Date(r.verified_at).toLocaleString("zh-TW"):""]);});
       var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(ws),"明細");
       XLSX.writeFile(wb,fn);
@@ -1261,7 +1261,7 @@ async function toggleVerify(panelId,tp){
             +"<td></td>"
             +"<td class='mn' style='font-size:11px;color:#6b7280;padding-left:16px;'>└</td>"
             +"<td class='mn' style='font-size:11px;'>"+shortDispNo(r.dn)+"</td>"
-            +"<td style='font-size:11px;color:#374151;'>病歷 <span class='mn'>"+r.pid+"</span></td>"
+            +"<td style='font-size:11px;color:#374151;'>代號 <span class='mn'>"+r.pid+"</span></td>"
             +"<td colspan='2' style='font-size:11px;text-align:right;'>×"+r.qty+" "+r.unit+" "+pDir+"</td>"
             +"<td style='font-size:11px;color:#6b7280;white-space:nowrap;'>刷碼 "+dispTime+"</td>"
             +"<td style='font-size:11px;color:#059669;white-space:nowrap;'>"+vName+"</td>"
@@ -1334,7 +1334,7 @@ async function toggleVerify(panelId,tp){
           rows4.push("<tr class='"+safeId+"' style='display:none;background:#F0FDF4;'>"
             +"<td></td><td class='mn' style='font-size:11px;color:#6b7280;padding-left:16px;'>└</td>"
             +"<td class='mn' style='font-size:11px;'>"+shortDispNo(r.dn)+"</td>"
-            +"<td style='font-size:11px;color:#374151;'>病歷 <span class='mn'>"+r.pid+"</span></td>"
+            +"<td style='font-size:11px;color:#374151;'>代號 <span class='mn'>"+r.pid+"</span></td>"
             +"<td colspan='2' style='font-size:11px;text-align:right;'>×"+r.qty+" "+r.unit+" "+pDir+"</td>"
             +"<td style='font-size:11px;color:#6b7280;white-space:nowrap;'>刷碼 "+dispTime+"</td>"
             +"<td style='font-size:11px;color:#059669;white-space:nowrap;'>"+vName+"</td>"
@@ -1875,7 +1875,7 @@ async function loadPending(){
     var t=new Date(r.created_at).toLocaleString("zh-TW");
     var confirmBtn='<button class="btn" style="font-size:11px;padding:2px 7px;color:#059669;border-color:#6ee7b7;" onclick="confirmPending(\''+r.id+'\',\''+r.drug_code+'\',\''+r.patient_id+'\','+r.quantity+')">確認轉入</button>';
     var delBtn='<button class="btn" style="font-size:11px;padding:2px 7px;color:#dc2626;border-color:#fca5a5;" onclick="window._dp(\''+r.id+'\')">刪除</button>';
-    return '<div class="ur"><div style="flex:1;min-width:0;"><span class="bdg bwn" style="margin-right:4px;font-size:10px;">待更新</span><span class="mn" style="font-weight:600;">'+r.drug_code+'</span> 病歷:'+r.patient_id+' 量:'+r.quantity+' <span style="font-size:11px;color:#6b7280;">'+t+'</span></div><div style="display:flex;gap:4px;flex-shrink:0;">'+confirmBtn+delBtn+'</div></div>';
+    return '<div class="ur"><div style="flex:1;min-width:0;"><span class="bdg bwn" style="margin-right:4px;font-size:10px;">待更新</span><span class="mn" style="font-weight:600;">'+r.drug_code+'</span> 代號:'+r.patient_id+' 量:'+r.quantity+' <span style="font-size:11px;color:#6b7280;">'+t+'</span></div><div style="display:flex;gap:4px;flex-shrink:0;">'+confirmBtn+delBtn+'</div></div>';
   }).join("");
 }
 window._dp=async function(id){
@@ -1894,7 +1894,7 @@ async function confirmPending(pid,drugCode,patientId,qty){
     window._pcmCb=null;
   } else {
     content.innerHTML='<div class="al ag">找到藥品：<strong>'+tc(drug.name)+'</strong>（庫存碼：'+drug.stock_code+'）</div>'
-      +'<div style="font-size:13px;">病歷號：<strong>'+patientId+'</strong>，數量：<strong>'+qty+'</strong> '+drug.unit+'<br>確認後將轉為正式互領紀錄。</div>';
+      +'<div style="font-size:13px;">代號：<strong>'+patientId+'</strong>，數量：<strong>'+qty+'</strong> '+drug.unit+'<br>確認後將轉為正式互領紀錄。</div>';
     window._pcmCb=async function(){
       var pr=await sel("pending_records","id=eq."+pid+"&select=*");
       if(!Array.isArray(pr)||!pr.length) return;
