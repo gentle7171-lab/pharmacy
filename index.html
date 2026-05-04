@@ -1091,11 +1091,11 @@ async function expGen(){
     Object.values(nm).forEach(function(i){
       if(i.dl_unver>0||i.hw_unver>0){
         var u=i.dl_unver-i.hw_unver;
-        net.push([i.dc,i.sc,i.n,i.u,i.dl_unver,i.hw_unver,u>0?"斗六→虎尾":u<0?"虎尾→斗六":"持平",Math.abs(u),"未核對","",""]);
+        net.push([i.dc,i.sc,i.n,i.u,i.dl_unver,i.hw_unver,u>0?"虎尾轉斗六":u<0?"斗六轉虎尾":"持平",Math.abs(u),"未核對","",""]);
       }
       if(i.dl_ver>0||i.hw_ver>0){
         var v=i.dl_ver-i.hw_ver;
-        net.push([i.dc,i.sc,i.n,i.u,i.dl_ver,i.hw_ver,v>0?"斗六→虎尾":v<0?"虎尾→斗六":"持平",Math.abs(v),"已核對",nameMap[i.vby]||i.vby||"",i.vat?new Date(i.vat).toLocaleString("zh-TW"):""]);
+        net.push([i.dc,i.sc,i.n,i.u,i.dl_ver,i.hw_ver,v>0?"虎尾轉斗六":v<0?"斗六轉虎尾":"持平",Math.abs(v),"已核對",nameMap[i.vby]||i.vby||"",i.vat?new Date(i.vat).toLocaleString("zh-TW"):""]);
       }
     });
     // Sheet2：核對明細（含刷條碼時間）
@@ -1151,8 +1151,8 @@ async function expCtrlSheet(tp){
       });
       var net=[["藥品台大碼","庫存碼","商品名","單位","斗六→虎尾","虎尾→斗六","淨額方向","淨額","核對狀態","核對人員","核對時間"]];
       Object.values(nm).forEach(function(i){
-        if(i.dl_unver>0||i.hw_unver>0){var u=i.dl_unver-i.hw_unver;net.push([i.dc,i.sc,i.n,i.u,i.dl_unver,i.hw_unver,u>0?"斗六→虎尾":u<0?"虎尾→斗六":"持平",Math.abs(u),"未核對","",""]);};
-        if(i.dl_ver>0||i.hw_ver>0){var v=i.dl_ver-i.hw_ver;net.push([i.dc,i.sc,i.n,i.u,i.dl_ver,i.hw_ver,v>0?"斗六→虎尾":v<0?"虎尾→斗六":"持平",Math.abs(v),"已核對",nameMap[i.vby]||i.vby||"",i.vat?new Date(i.vat).toLocaleString("zh-TW"):""]);};
+        if(i.dl_unver>0||i.hw_unver>0){var u=i.dl_unver-i.hw_unver;net.push([i.dc,i.sc,i.n,i.u,i.dl_unver,i.hw_unver,u>0?"虎尾轉斗六":u<0?"斗六轉虎尾":"持平",Math.abs(u),"未核對","",""]);};
+        if(i.dl_ver>0||i.hw_ver>0){var v=i.dl_ver-i.hw_ver;net.push([i.dc,i.sc,i.n,i.u,i.dl_ver,i.hw_ver,v>0?"虎尾轉斗六":v<0?"斗六轉虎尾":"持平",Math.abs(v),"已核對",nameMap[i.vby]||i.vby||"",i.vat?new Date(i.vat).toLocaleString("zh-TW"):""]);};
       });
       var det=[["刷碼時間","代號","領藥號","藥品台大碼","庫存碼","商品名","數量","單位","開方院區","領藥院區","操作藥師","核對狀態","核對人員","核對時間"]];
       rows.forEach(function(r){det.push([r.dispensed_at?new Date(r.dispensed_at).toLocaleString("zh-TW"):"",r.patient_id||"",r.dispense_no||"",r.drug_code||"",r.stock_code||"",r.drug_name||"",r.quantity,r.drug_unit||"",CL[r.prescribe_campus]||"",CL[r.dispense_campus]||"",r.pharmacist_emp_id||"",r.verified?"已核對":"未核對",r.verified?(nameMap[r.verified_by]||r.verified_by||""):"",r.verified_at?new Date(r.verified_at).toLocaleString("zh-TW"):""]);});
@@ -1223,7 +1223,7 @@ async function toggleVerify(panelId,tp){
     Object.values(nm).forEach(function(i){
       if(i.dl_unver>0||i.hw_unver>0){
         var u=i.dl_unver-i.hw_unver;
-        var uDir=u>0?"斗六→虎尾":u<0?"虎尾→斗六":"持平";
+        var uDir=u>0?"虎尾轉斗六":u<0?"斗六轉虎尾":"持平";
         var idsAttr=i.unver_ids.join(",");
         var chk='<input type="checkbox" class="vchk-g" data-ids="'+idsAttr+'" style="cursor:pointer;"/>';
         var vbtn=(CU.role==="warehouse"||CU.role==="admin")
@@ -1241,7 +1241,7 @@ async function toggleVerify(panelId,tp){
       }
       if(i.dl_ver>0||i.hw_ver>0){
         var v=i.dl_ver-i.hw_ver;
-        var vDir=v>0?"斗六→虎尾":v<0?"虎尾→斗六":"持平";
+        var vDir=v>0?"虎尾轉斗六":v<0?"斗六轉虎尾":"持平";
         var safeId="vdet_"+i.dc.replace(/[^a-zA-Z0-9]/g,"_");
         rows2.push("<tr style='cursor:pointer;' onclick=\"var els=document.querySelectorAll('."+safeId+"');var show=els[0]&&els[0].style.display==='none';els.forEach(function(e){e.style.display=show?'':'none';});this.querySelector('.expand-arrow').textContent=show?'▼':'▶';\">"
           +"<td></td>"
@@ -1302,7 +1302,7 @@ async function toggleVerify(panelId,tp){
     Object.values(nm4).forEach(function(i){
       if(i.dl_unver>0||i.hw_unver>0){
         var u=i.dl_unver-i.hw_unver;
-        var uDir=u>0?"斗六→虎尾":u<0?"虎尾→斗六":"持平";
+        var uDir=u>0?"虎尾轉斗六":u<0?"斗六轉虎尾":"持平";
         var idsAttr=i.unver_ids.join(",");
         var chk='<input type="checkbox" class="vchk-c4" data-ids="'+idsAttr+'" style="cursor:pointer;"/>';
         var vbtn=(CU.role==="warehouse"||CU.role==="admin")
@@ -1317,7 +1317,7 @@ async function toggleVerify(panelId,tp){
       }
       if(i.dl_ver>0||i.hw_ver>0){
         var v=i.dl_ver-i.hw_ver;
-        var vDir=v>0?"斗六→虎尾":v<0?"虎尾→斗六":"持平";
+        var vDir=v>0?"虎尾轉斗六":v<0?"斗六轉虎尾":"持平";
         var safeId="vdet4_"+i.dc.replace(/[^a-zA-Z0-9]/g,"_");
         rows4.push("<tr style='cursor:pointer;' onclick=\"var els=document.querySelectorAll('."+safeId+"');var show=els[0]&&els[0].style.display==='none';els.forEach(function(e){e.style.display=show?'':'none';});this.querySelector('.expand-arrow').textContent=show?'▼':'▶';\">"
           +"<td></td><td class='mn'>"+i.dc+"</td><td class='mn'>"+i.sc+"</td><td>"+tc(i.n)+"</td>"
