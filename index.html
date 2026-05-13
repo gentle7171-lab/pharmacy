@@ -956,17 +956,17 @@ function showToast(msg,type){
 
 // ── Counts ────────────────────────────────────────────────
 async function loadCounts(){
-  var td=new Date().toISOString().slice(0,10);
+  var td=new Date().toLocaleDateString("zh-TW",{timeZone:"Asia/Taipei"}).replace(/\//g,"-").replace(/(\d+)-(\d+)-(\d+)/,function(m,y,mo,d){return y+"-"+mo.padStart(2,"0")+"-"+d.padStart(2,"0");});
   var d=new Date(),dy=d.getDay()||7; d.setDate(d.getDate()-dy+1); var ws=d.toISOString().slice(0,10);
-  var tc=await sel("dispensing_records","dispensed_at=gte."+td+"T00:00:00&dispensed_at=lte."+td+"T23:59:59&select=id",true);
-  var wc=await sel("dispensing_records","dispensed_at=gte."+ws+"T00:00:00&select=id",true);
+  var tc=await sel("dispensing_records","dispensed_at=gte."+twDateToUtc(td,false)+"&dispensed_at=lte."+twDateToUtc(td,true)+"&select=id",true);
+  var wc=await sel("dispensing_records","dispensed_at=gte."+twDateToUtc(ws,false)+"&select=id",true);
   g("ct").textContent=tc; g("cw").textContent=wc;
 }
 
 // ── Recent records ────────────────────────────────────────
 async function loadRecent(){
-  var td=new Date().toISOString().slice(0,10);
-  var data=await sel("dispensing_records","dispensed_at=gte."+td+"T00:00:00&dispensed_at=lte."+td+"T23:59:59&order=dispensed_at.desc&limit=5&select=*");
+  var td=new Date().toLocaleDateString("zh-TW",{timeZone:"Asia/Taipei"}).replace(/\//g,"-").replace(/(\d+)-(\d+)-(\d+)/,function(m,y,mo,d){return y+"-"+mo.padStart(2,"0")+"-"+d.padStart(2,"0");});
+  var data=await sel("dispensing_records","dispensed_at=gte."+twDateToUtc(td,false)+"&dispensed_at=lte."+twDateToUtc(td,true)+"&order=dispensed_at.desc&limit=5&select=*");
   var el=g("recent-list");
   if(!Array.isArray(data)||!data.length){el.innerHTML='<div style="font-size:12px;color:#9ca3af;text-align:center;padding:8px 0;">尚無資料</div>';return;}
   el.innerHTML=data.map(function(r){
@@ -982,12 +982,12 @@ async function loadRecent(){
 async function loadRec(){
   var sd=g("rd").value,ed=g("rd2").value||sd,tp=g("rt").value,tb=g("rtb");
   tb.innerHTML='<tr><td colspan="12" style="text-align:center;padding:14px;color:#9ca3af;">載入中...</td></tr>';
-  var qs="dispensed_at=gte."+sd+"T00:00:00&dispensed_at=lte."+ed+"T23:59:59&order=dispensed_at.desc&select=*";
+  var qs="dispensed_at=gte."+twDateToUtc(sd,false)+"&dispensed_at=lte."+twDateToUtc(ed,true)+"&order=dispensed_at.desc&select=*";
   if(tp==="g") qs+="&ctrl_level=eq.0"; else if(tp==="c12") qs+="&ctrl_level=in.(1,2)"; else if(tp==="c3") qs+="&ctrl_level=eq.3"; else if(tp==="c4") qs+="&ctrl_level=eq.4";
   var data=await sel("dispensing_records",qs);
 
   // 暫存紀錄（全部類別才顯示）
-  var pdata=tp==="all"?await sel("pending_records","created_at=gte."+sd+"T00:00:00&created_at=lte."+ed+"T23:59:59&order=created_at.desc&select=*"):[];
+  var pdata=tp==="all"?await sel("pending_records","created_at=gte."+twDateToUtc(sd,false)+"&created_at=lte."+twDateToUtc(ed,true)+"&order=created_at.desc&select=*"):[];
 
   var rows=[];
   if(Array.isArray(data)&&data.length) rows=rows.concat(data.map(function(r){return{type:"normal",r:r};}));
@@ -1054,9 +1054,17 @@ function getRptDates(){
   return {sd:sd,ed:ed};
 }
 
+// 台灣時間(UTC+8)轉UTC查詢範圍
+function twDateToUtc(date,isEnd){
+  // 台灣 yyyy-mm-dd 00:00 = UTC yyyy-mm-dd 前一天 16:00
+  // 台灣 yyyy-mm-dd 23:59:59 = UTC yyyy-mm-dd 15:59:59
+  var d=new Date(date+(isEnd?"T23:59:59+08:00":"T00:00:00+08:00"));
+  return d.toISOString().replace("Z","");
+}
+
 async function fetchRpt(tp){
   var dates=getRptDates(),sd=dates.sd,ed=dates.ed;
-  var qs="dispensed_at=gte."+sd+"T00:00:00&dispensed_at=lte."+ed+"T23:59:59&order=dispensed_at.asc&select=*";
+  var qs="dispensed_at=gte."+twDateToUtc(sd,false)+"&dispensed_at=lte."+twDateToUtc(ed,true)+"&order=dispensed_at.asc&select=*";
   if(tp==="g") qs+="&ctrl_level=eq.0"; else if(tp==="c12") qs+="&ctrl_level=in.(1,2)"; else if(tp==="c3") qs+="&ctrl_level=eq.3"; else if(tp==="c4") qs+="&ctrl_level=eq.4";
   return await sel("dispensing_records",qs);
 }
@@ -1381,7 +1389,7 @@ async function batchVerifyAll(tp){
   var rangeLabel=sd===ed?sd:sd+"～"+ed;
   if(!confirm("確定要核對 "+rangeLabel+" 所有未核對的"+label+"嗎？")) return;
   var now=new Date().toISOString();
-  var qs="verified=eq.false&dispensed_at=gte."+sd+"T00:00:00&dispensed_at=lte."+ed+"T23:59:59";
+  var qs="verified=eq.false&dispensed_at=gte."+twDateToUtc(sd,false)+"&dispensed_at=lte."+twDateToUtc(ed,true);
   if(tp==="g") qs+="&ctrl_level=eq.0";
   else if(tp==="c12") qs+="&ctrl_level=in.(1,2)";
   else if(tp==="c4") qs+="&ctrl_level=eq.4";
