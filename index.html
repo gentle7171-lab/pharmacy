@@ -14,7 +14,10 @@ body{font-family:Arial,sans-serif;background:#F4F5F7;font-size:16px;color:#111;}
 nav{display:flex;gap:2px;}
 .nb{padding:5px 10px;border-radius:6px;border:none;background:transparent;font-size:13px;cursor:pointer;color:#6b7280;}
 .nb.on{background:#EFF6FF;color:#185FA5;font-weight:600;}
-#wrap{max-width:760px;margin:0 auto;padding:16px;}
+#wrap{max-width:960px;margin:0 auto;padding:16px;}
+#tr .card{max-width:100%;}
+#tr table th,#tr table td{padding:5px 6px;font-size:11.5px;}
+#tr table th{white-space:nowrap;}
 .card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:12px;}
 .btn{padding:7px 14px;border-radius:7px;border:1px solid #d1d5db;background:#fff;font-size:13px;cursor:pointer;font-family:inherit;}
 .btn:active{transform:scale(0.97);}
@@ -218,9 +221,9 @@ tr:hover td{background:#fafafa;}
         <span style="font-size:12px;color:#6b7280;margin-left:auto;" id="rc"></span>
       </div>
       <div class="card" style="padding:0;overflow-x:auto;">
-        <table style="min-width:780px;">
+        <table style="min-width:680px;">
           <thead><tr>
-            <th>時間</th><th>代號</th><th>領藥號</th><th>台大碼</th><th>庫存碼</th><th>商品名</th><th>數量</th><th>類別</th><th>開方</th><th>領藥</th><th>藥師</th><th>操作</th>
+            <th>時間</th><th>代號</th><th>領藥號</th><th>台大碼</th><th>庫存碼</th><th>商品名</th><th>量</th><th>類別</th><th>開方</th><th>領藥</th><th>藥師</th><th>操作</th>
           </tr></thead>
           <tbody id="rtb"><tr><td colspan="12" style="text-align:center;padding:16px;color:#9ca3af;">請選日期查詢</td></tr></tbody>
         </table>
@@ -1011,7 +1014,7 @@ async function loadRec(){
       var t='<div style="font-size:11px;">'+dt2.toLocaleDateString("zh-TW",{month:"2-digit",day:"2-digit"})+'</div><div style="font-size:10px;color:#6b7280;">'+dt2.toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit"})+'</div>';
       var canDelP=CU.role==="admin"||(r.pharmacist_emp_id===CU.emp_id);
       var delBtn=canDelP?'<button class="btn" style="font-size:11px;padding:2px 7px;color:#dc2626;border-color:#fca5a5;" onclick="window._dp(\''+r.id+'\')">刪除</button>':'';
-      return '<tr style="background:#FFFBEB;"><td class="mn">'+t+'</td><td class="mn">'+(r.patient_id||"")+'</td><td class="mn">'+shortDispNo(r.dispense_no||"")+'</td><td class="mn" style="color:#92400e;font-weight:600;">'+(r.drug_code||"")+'</td><td class="mn">－</td><td style="color:#92400e;">主檔待更新</td><td style="text-align:right;">'+(r.quantity||"")+'</td><td><span class="bdg bwn">待確認</span></td><td colspan="2" style="font-size:11px;color:#9ca3af;">－</td><td style="font-size:11px;">'+pharmacistName+'</td><td>'+delBtn+'</td></tr>';
+      return '<tr style="background:#FFFBEB;"><td class="mn">'+t+'</td><td class="mn">'+(r.patient_id||"")+'</td><td class="mn">'+shortDispNo(r.dispense_no||"")+'</td><td class="mn" style="color:#92400e;font-weight:600;">'+(r.drug_code||"")+'</td><td class="mn">－</td><td style="color:#92400e;">主檔待更新</td><td style="text-align:right;white-space:nowrap;">'+(r.quantity||"")+'</td><td><span class="bdg bwn">待確認</span></td><td colspan="2" style="font-size:11px;color:#9ca3af;">－</td><td style="font-size:11px;">'+pharmacistName+'</td><td style="white-space:nowrap;">'+delBtn+'</td></tr>';
     }
     var dt2=new Date(r.dispensed_at);
     var t='<div style="font-size:11px;">'+dt2.toLocaleDateString("zh-TW",{month:"2-digit",day:"2-digit"})+'</div><div style="font-size:10px;color:#6b7280;">'+dt2.toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit"})+'</div>';
@@ -1022,7 +1025,7 @@ async function loadRec(){
     var isCtrl=(r.ctrl_level==="1"||r.ctrl_level==="2"||r.ctrl_level==="3"||r.ctrl_level===1||r.ctrl_level===2||r.ctrl_level===3);
     var rxDateStr=(isCtrl&&r.prescription_date)?'<div style="font-size:10px;color:#185FA5;">開方:'+r.prescription_date.slice(5).replace('-','/')+'</div>':"";
     var dispNoCell='<div style="font-size:11px;">'+shortDn+'</div>'+rxDateStr;
-    return "<tr><td>"+t+"</td><td class='mn'>"+(r.patient_id||"")+"</td><td>"+dispNoCell+"</td><td class='mn'>"+(r.drug_code||"")+"</td><td class='mn'>"+(r.stock_code||"")+"</td><td style='max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;' title='"+(r.drug_name||"")+"'>"+tc(r.drug_name||"")+"</td><td style='text-align:right;'>"+(r.quantity||"")+"</td><td>"+cb+"</td><td>"+pb+"</td><td>"+db+"</td><td style='font-size:12px;white-space:nowrap;'>"+pharmacistName+"</td><td>"+delBtn+"</td></tr>";
+    return "<tr><td>"+t+"</td><td class='mn'>"+(r.patient_id||"")+"</td><td>"+dispNoCell+"</td><td class='mn'>"+(r.drug_code||"")+"</td><td class='mn'>"+(r.stock_code||"")+"</td><td style='max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;' title='"+(r.drug_name||"")+"'>"+tc(r.drug_name||"")+"</td><td style='text-align:right;white-space:nowrap;'>"+(r.quantity||"")+"</td><td>"+cb+"</td><td>"+pb+"</td><td>"+db+"</td><td style='font-size:12px;white-space:nowrap;'>"+pharmacistName+"</td><td style='white-space:nowrap;'>"+delBtn+"</td></tr>";
   }).join("");
 }
 
