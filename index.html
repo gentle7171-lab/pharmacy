@@ -836,7 +836,7 @@ async function procBar(raw){
   hi("bp2");
 
   if(!drug){
-    await ins("pending_records",{patient_account:qr.pa,patient_id:qr.pi,dispense_no:qr.dn,drug_code:qr.dc,quantity:qr.qt,qr_unit:qr.qu,campus:CU.campus,pharmacist_emp_id:CU.emp_id,note:"藥品台大碼不在主檔"});
+    await ins("pending_records",{patient_account:qr.pa,patient_id:pidS(qr.pi),dispense_no:qr.dn,drug_code:qr.dc,quantity:qr.qt,qr_unit:qr.qu,campus:CU.campus,pharmacist_emp_id:CU.emp_id,note:"藥品台大碼不在主檔",created_at:new Date().toISOString()});
     g("unk-code").textContent=qr.dc; g("unk-pid").textContent=pidS(qr.pi); g("unk-dn").textContent=qr.dn; g("unk-qty").textContent=qr.qt+" "+qr.qu;
     sh("unk-card"); LK=false; return;
   }
@@ -885,7 +885,7 @@ async function saveEmgRecord(){
   }
   hi("emg-card");
   if(!PD){
-    await ins("pending_records",{patient_account:PQ.pa,patient_id:PQ.pi,dispense_no:PQ.dn,drug_code:PQ.dc,quantity:PQ.qt,qr_unit:PQ.qu,campus:dc,pharmacist_emp_id:CU.emp_id,note:"急診處方，藥品台大碼不在主檔"});
+    await ins("pending_records",{patient_account:PQ.pa,patient_id:pidS(PQ.pi),dispense_no:PQ.dn,drug_code:PQ.dc,quantity:PQ.qt,qr_unit:PQ.qu,campus:dc,pharmacist_emp_id:CU.emp_id,note:"急診處方，藥品台大碼不在主檔",created_at:new Date().toISOString()});
     showToast("急診暫存完成，待管理員更新主檔","ok");
     loadRecent(); return;
   }
@@ -910,7 +910,7 @@ async function saveEmgRecord(){
 async function saveRecord(qr,drug,pc,dc,rxDate){
   var today=new Date().toISOString().slice(0,10);
   var finalRxDate=rxDate||today;
-  var r=await ins("dispensing_records",{patient_account:qr.pa,patient_id:qr.pi,dispense_no:qr.dn,drug_code:qr.dc,quantity:qr.qt,qr_unit:qr.qu,stock_code:drug.stock_code,drug_name:drug.name,ctrl_level:drug.ctrl_level,drug_unit:drug.unit,prescribe_campus:pc,dispense_campus:dc,pharmacist_emp_id:CU.emp_id,prescription_date:finalRxDate});
+  var r=await ins("dispensing_records",{patient_account:qr.pa,patient_id:pidS(qr.pi),dispense_no:qr.dn,drug_code:qr.dc,quantity:qr.qt,qr_unit:qr.qu,stock_code:drug.stock_code,drug_name:drug.name,ctrl_level:drug.ctrl_level,drug_unit:drug.unit,prescribe_campus:pc,dispense_campus:dc,pharmacist_emp_id:CU.emp_id,prescription_date:finalRxDate,dispensed_at:new Date().toISOString()});
   if(r.error){showToast("儲存失敗","err");return;}
   showToast("已儲存："+drug.drug_code+" "+tc(drug.name),"ok");
   loadCounts(); loadRecent();
@@ -931,7 +931,7 @@ async function autoConvertPending(){
     var px=(pr.dispense_no||"").toUpperCase()[0]||"";
     var pc=px==="A"?"douliou":px==="D"?"huwei":pr.campus;
     await ins("dispensing_records",{
-      patient_account:pr.patient_account||"",patient_id:pr.patient_id||"",
+      patient_account:pr.patient_account||"",patient_id:pidS(pr.patient_id),
       dispense_no:pr.dispense_no||"",drug_code:pr.drug_code,quantity:pr.quantity,
       qr_unit:pr.qr_unit||"",stock_code:drug.stock_code,drug_name:drug.name,
       ctrl_level:drug.ctrl_level,drug_unit:drug.unit,
@@ -973,7 +973,7 @@ async function loadRecent(){
   var el=g("recent-list");
   if(!Array.isArray(data)||!data.length){el.innerHTML='<div style="font-size:12px;color:#9ca3af;text-align:center;padding:8px 0;">尚無資料</div>';return;}
   el.innerHTML=data.map(function(r){
-    var t=new Date(r.dispensed_at).toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit"});
+    var t=new Date(r.dispensed_at).toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit",timeZone:"Asia/Taipei"});
     var cl=r.ctrl_level,cb=(cl==="0")?'<span class="bdg bgn" style="font-size:10px;">一般</span>':(cl==="1"||cl==="2")?'<span class="bdg bc1" style="font-size:10px;">管'+cl+'</span>':(cl==="4")?'<span class="bdg" style="font-size:10px;background:#DBEAFE;color:#1e40af;">管4</span>':'<span class="bdg bc3" style="font-size:10px;">管'+cl+'</span>';
     var pb='<span class="bdg '+(r.prescribe_campus==="douliou"?"bdl":"bhw")+'" style="font-size:10px;">'+(r.prescribe_campus==="douliou"?"斗六":"虎尾")+'</span>';
     var db='<span class="bdg '+(r.dispense_campus==="douliou"?"bdl":"bhw")+'" style="font-size:10px;">'+(r.dispense_campus==="douliou"?"斗六":"虎尾")+'</span>';
@@ -1011,13 +1011,13 @@ async function loadRec(){
     var canDel=CU.role==="admin"||(r.pharmacist_emp_id===CU.emp_id);
     if(item.type==="pending"){
       var dt2=new Date(r.created_at);
-      var t='<div style="font-size:11px;">'+dt2.toLocaleDateString("zh-TW",{month:"2-digit",day:"2-digit"})+'</div><div style="font-size:10px;color:#6b7280;">'+dt2.toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit"})+'</div>';
+      var t='<div style="font-size:11px;">'+dt2.toLocaleDateString("zh-TW",{month:"2-digit",day:"2-digit",timeZone:"Asia/Taipei"})+'</div><div style="font-size:10px;color:#6b7280;">'+dt2.toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit",timeZone:"Asia/Taipei"})+'</div>';
       var canDelP=CU.role==="admin"||(r.pharmacist_emp_id===CU.emp_id);
       var delBtn=canDelP?'<button class="btn" style="font-size:11px;padding:2px 7px;color:#dc2626;border-color:#fca5a5;" onclick="window._dp(\''+r.id+'\')">刪除</button>':'';
       return '<tr style="background:#FFFBEB;"><td class="mn">'+t+'</td><td class="mn">'+pidS(r.patient_id)+'</td><td class="mn">'+shortDispNo(r.dispense_no||"")+'</td><td class="mn" style="color:#92400e;font-weight:600;">'+(r.drug_code||"")+'</td><td class="mn">－</td><td style="text-align:right;white-space:nowrap;">'+(r.quantity||"")+'</td><td><span class="bdg bwn">待確認</span></td><td colspan="2" style="font-size:11px;color:#9ca3af;">－</td><td style="font-size:11px;">'+pharmacistName+'</td><td style="white-space:nowrap;">'+delBtn+'</td></tr>';
     }
     var dt2=new Date(r.dispensed_at);
-    var t='<div style="font-size:11px;">'+dt2.toLocaleDateString("zh-TW",{month:"2-digit",day:"2-digit"})+'</div><div style="font-size:10px;color:#6b7280;">'+dt2.toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit"})+'</div>';
+    var t='<div style="font-size:11px;">'+dt2.toLocaleDateString("zh-TW",{month:"2-digit",day:"2-digit",timeZone:"Asia/Taipei"})+'</div><div style="font-size:10px;color:#6b7280;">'+dt2.toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit",timeZone:"Asia/Taipei"})+'</div>';
     var cl=r.ctrl_level,cb=(cl==="0")?'<span class="bdg bgn">一般</span>':(cl==="1"||cl==="2")?'<span class="bdg bc1">管'+cl+'</span>':(cl==="4")?'<span class="bdg" style="background:#DBEAFE;color:#1e40af;">管4</span>':'<span class="bdg bc3">管'+cl+'</span>';
     var pb='<span class="bdg '+(r.prescribe_campus==="douliou"?"bdl":"bhw")+'">'+(r.prescribe_campus==="douliou"?"斗六":"虎尾")+'</span>';
     var db='<span class="bdg '+(r.dispense_campus==="douliou"?"bdl":"bhw")+'">'+(r.dispense_campus==="douliou"?"斗六":"虎尾")+'</span>';
@@ -1111,14 +1111,14 @@ async function expGen(){
       }
       if(i.dl_ver>0||i.hw_ver>0){
         var v=i.dl_ver-i.hw_ver;
-        net.push([i.dc,i.sc,i.u,i.dl_ver,i.hw_ver,v>0?"虎尾轉斗六":v<0?"斗六轉虎尾":"持平",Math.abs(v),"已核對",nameMap[i.vby]||i.vby||"",i.vat?new Date(i.vat).toLocaleString("zh-TW"):""]);
+        net.push([i.dc,i.sc,i.u,i.dl_ver,i.hw_ver,v>0?"虎尾轉斗六":v<0?"斗六轉虎尾":"持平",Math.abs(v),"已核對",nameMap[i.vby]||i.vby||"",i.vat?new Date(i.vat).toLocaleString("zh-TW",{timeZone:"Asia/Taipei"}):""]);
       }
     });
     // Sheet2：核對明細（含刷條碼時間）
     var det=[["刷碼時間","代號","領藥號","藥品台大碼","庫存碼","數量","單位","開方院區","領藥院區","操作藥師","核對狀態","核對人員","核對時間"]];
     rows.forEach(function(r){
       det.push([
-        r.dispensed_at?new Date(r.dispensed_at).toLocaleString("zh-TW"):"",
+        r.dispensed_at?new Date(r.dispensed_at).toLocaleString("zh-TW",{timeZone:"Asia/Taipei"}):"",
         pidS(r.patient_id),
         r.dispense_no||"",
         r.drug_code||"",
@@ -1130,7 +1130,7 @@ async function expGen(){
         r.pharmacist_emp_id||"",
         r.verified?"已核對":"未核對",
         r.verified?(nameMap[r.verified_by]||r.verified_by||""):"",
-        r.verified_at?new Date(r.verified_at).toLocaleString("zh-TW"):""
+        r.verified_at?new Date(r.verified_at).toLocaleString("zh-TW",{timeZone:"Asia/Taipei"}):""
       ]);
     });
     var wb=XLSX.utils.book_new();
@@ -1167,10 +1167,10 @@ async function expCtrlSheet(tp){
       var net=[["藥品台大碼","庫存碼","單位","斗六→虎尾","虎尾→斗六","淨額方向","淨額","核對狀態","核對人員","核對時間"]];
       Object.values(nm).forEach(function(i){
         if(i.dl_unver>0||i.hw_unver>0){var u=i.dl_unver-i.hw_unver;net.push([i.dc,i.sc,i.u,i.dl_unver,i.hw_unver,u>0?"虎尾轉斗六":u<0?"斗六轉虎尾":"持平",Math.abs(u),"未核對","",""]);};
-        if(i.dl_ver>0||i.hw_ver>0){var v=i.dl_ver-i.hw_ver;net.push([i.dc,i.sc,i.u,i.dl_ver,i.hw_ver,v>0?"虎尾轉斗六":v<0?"斗六轉虎尾":"持平",Math.abs(v),"已核對",nameMap[i.vby]||i.vby||"",i.vat?new Date(i.vat).toLocaleString("zh-TW"):""]);};
+        if(i.dl_ver>0||i.hw_ver>0){var v=i.dl_ver-i.hw_ver;net.push([i.dc,i.sc,i.u,i.dl_ver,i.hw_ver,v>0?"虎尾轉斗六":v<0?"斗六轉虎尾":"持平",Math.abs(v),"已核對",nameMap[i.vby]||i.vby||"",i.vat?new Date(i.vat).toLocaleString("zh-TW",{timeZone:"Asia/Taipei"}):""]);};
       });
       var det=[["刷碼時間","代號","領藥號","藥品台大碼","庫存碼","數量","單位","開方院區","領藥院區","操作藥師","核對狀態","核對人員","核對時間"]];
-      rows.forEach(function(r){det.push([r.dispensed_at?new Date(r.dispensed_at).toLocaleString("zh-TW"):"",pidS(r.patient_id),r.dispense_no||"",r.drug_code||"",r.stock_code||"",r.quantity,r.drug_unit||"",CL[r.prescribe_campus]||"",CL[r.dispense_campus]||"",r.pharmacist_emp_id||"",r.verified?"已核對":"未核對",r.verified?(nameMap[r.verified_by]||r.verified_by||""):"",r.verified_at?new Date(r.verified_at).toLocaleString("zh-TW"):""]);});
+      rows.forEach(function(r){det.push([r.dispensed_at?new Date(r.dispensed_at).toLocaleString("zh-TW",{timeZone:"Asia/Taipei"}):"",pidS(r.patient_id),r.dispense_no||"",r.drug_code||"",r.stock_code||"",r.quantity,r.drug_unit||"",CL[r.prescribe_campus]||"",CL[r.dispense_campus]||"",r.pharmacist_emp_id||"",r.verified?"已核對":"未核對",r.verified?(nameMap[r.verified_by]||r.verified_by||""):"",r.verified_at?new Date(r.verified_at).toLocaleString("zh-TW",{timeZone:"Asia/Taipei"}):""]);});
       var wb=XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(net),"淨額統計");
       XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(det),"核對明細");
@@ -1179,7 +1179,7 @@ async function expCtrlSheet(tp){
   } else {
     loadXLSX(function(){
       var ws=[["操作時間","開方日期","病患帳號","代號","領藥號","藥品台大碼","庫存碼","管制級別","數量","單位","開方院區","領藥院區","操作藥師","核對狀態","核對人員","核對時間"]];
-      rows.forEach(function(r){ws.push([new Date(r.dispensed_at).toLocaleString("zh-TW"),r.prescription_date||"",r.patient_account,pidS(r.patient_id),r.dispense_no,r.drug_code,r.stock_code,"管"+r.ctrl_level,r.quantity,r.drug_unit,CL[r.prescribe_campus],CL[r.dispense_campus],r.pharmacist_emp_id,r.verified?"已核對":"未核對",r.verified_by||"",r.verified_at?new Date(r.verified_at).toLocaleString("zh-TW"):""]);});
+      rows.forEach(function(r){ws.push([new Date(r.dispensed_at).toLocaleString("zh-TW",{timeZone:"Asia/Taipei"}),r.prescription_date||"",r.patient_account,pidS(r.patient_id),r.dispense_no,r.drug_code,r.stock_code,"管"+r.ctrl_level,r.quantity,r.drug_unit,CL[r.prescribe_campus],CL[r.dispense_campus],r.pharmacist_emp_id,r.verified?"已核對":"未核對",r.verified_by||"",r.verified_at?new Date(r.verified_at).toLocaleString("zh-TW",{timeZone:"Asia/Taipei"}):""]);});
       var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(ws),"明細");
       XLSX.writeFile(wb,fn);
     });
@@ -1270,8 +1270,8 @@ async function toggleVerify(panelId,tp){
         i.ver_records.forEach(function(r){
           var pDir=(r.pc==="douliou"?"斗六":"虎尾")+"→"+(r.dc2==="douliou"?"斗六":"虎尾");
           var vName=nameMap2[r.vby]||r.vby;
-          var dispTime=r.dat?new Date(r.dat).toLocaleDateString("zh-TW")+" "+new Date(r.dat).toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit"}):"";
-          var vTime=r.vat?new Date(r.vat).toLocaleDateString("zh-TW")+" "+new Date(r.vat).toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit"}):"";
+          var dispTime=r.dat?new Date(r.dat).toLocaleDateString("zh-TW",{timeZone:"Asia/Taipei"})+" "+new Date(r.dat).toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit",timeZone:"Asia/Taipei"}):"";
+          var vTime=r.vat?new Date(r.vat).toLocaleDateString("zh-TW",{timeZone:"Asia/Taipei"})+" "+new Date(r.vat).toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit",timeZone:"Asia/Taipei"}):"";
           rows2.push("<tr class='"+safeId+"' style='display:none;background:#F0FDF4;'>"
             +"<td></td>"
             +"<td class='mn' style='font-size:11px;color:#6b7280;padding-left:16px;'>└</td>"
@@ -1344,8 +1344,8 @@ async function toggleVerify(panelId,tp){
         i.ver_records.forEach(function(r){
           var pDir=(r.pc==="douliou"?"斗六":"虎尾")+"→"+(r.dc2==="douliou"?"斗六":"虎尾");
           var vName=nameMap4[r.vby]||r.vby;
-          var dispTime=r.dat?new Date(r.dat).toLocaleDateString("zh-TW")+" "+new Date(r.dat).toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit"}):"";
-          var vTime=r.vat?new Date(r.vat).toLocaleDateString("zh-TW")+" "+new Date(r.vat).toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit"}):"";
+          var dispTime=r.dat?new Date(r.dat).toLocaleDateString("zh-TW",{timeZone:"Asia/Taipei"})+" "+new Date(r.dat).toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit",timeZone:"Asia/Taipei"}):"";
+          var vTime=r.vat?new Date(r.vat).toLocaleDateString("zh-TW",{timeZone:"Asia/Taipei"})+" "+new Date(r.vat).toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit",timeZone:"Asia/Taipei"}):"";
           rows4.push("<tr class='"+safeId+"' style='display:none;background:#F0FDF4;'>"
             +"<td></td><td class='mn' style='font-size:11px;color:#6b7280;padding-left:16px;'>└</td>"
             +"<td class='mn' style='font-size:11px;'>"+shortDispNo(r.dn)+"</td>"
@@ -1370,11 +1370,11 @@ async function toggleVerify(panelId,tp){
     var tpShort=tp==="c12"?"c1":"c3";
     tb2.innerHTML=rows.map(function(r){
       var dt2=new Date(r.dispensed_at);
-      var t='<div style="font-size:11px;">'+dt2.toLocaleDateString("zh-TW",{month:"2-digit",day:"2-digit"})+'</div><div style="font-size:10px;color:#6b7280;">'+dt2.toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit"})+'</div>';
+      var t='<div style="font-size:11px;">'+dt2.toLocaleDateString("zh-TW",{month:"2-digit",day:"2-digit",timeZone:"Asia/Taipei"})+'</div><div style="font-size:10px;color:#6b7280;">'+dt2.toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit",timeZone:"Asia/Taipei"})+'</div>';
       var vs=r.verified?'<span class="bdg ag" style="font-size:10px;white-space:nowrap;">已核對</span>':'<span class="bdg bwn" style="font-size:10px;white-space:nowrap;">未核對</span>';
       var pb='<span class="bdg '+(r.prescribe_campus==="douliou"?"bdl":"bhw")+'" style="font-size:10px;">'+(r.prescribe_campus==="douliou"?"斗六":"虎尾")+'</span>';
       var db='<span class="bdg '+(r.dispense_campus==="douliou"?"bdl":"bhw")+'" style="font-size:10px;">'+(r.dispense_campus==="douliou"?"斗六":"虎尾")+'</span>';
-      var verInfo=r.verified?'<div style="font-size:11px;color:#6b7280;white-space:nowrap;">'+(nameMap2[r.verified_by]||r.verified_by)+'<br>'+new Date(r.verified_at).toLocaleDateString("zh-TW")+'<br>'+new Date(r.verified_at).toLocaleTimeString("zh-TW")+'</div>':"";
+      var verInfo=r.verified?'<div style="font-size:11px;color:#6b7280;white-space:nowrap;">'+(nameMap2[r.verified_by]||r.verified_by)+'<br>'+new Date(r.verified_at).toLocaleDateString("zh-TW",{timeZone:"Asia/Taipei"})+'<br>'+new Date(r.verified_at).toLocaleTimeString("zh-TW",{timeZone:"Asia/Taipei"})+'</div>':"";
       var chk=!r.verified?'<input type="checkbox" class="vchk-'+tpShort+'" data-id="'+r.id+'" style="cursor:pointer;"/>':'';
       var rxStr=r.prescription_date?'<div style="font-size:10px;color:#185FA5;">開方:'+r.prescription_date.slice(5).replace('-','/')+'</div>':"";
       var dispNoCell='<div style="font-size:11px;">'+shortDispNo(r.dispense_no||"")+'</div>'+rxStr;
@@ -1885,7 +1885,7 @@ async function loadPending(){
   }
   cnt.textContent="共 "+d.length+" 筆待處理";
   el.innerHTML=d.map(function(r){
-    var t=new Date(r.created_at).toLocaleString("zh-TW");
+    var t=new Date(r.created_at).toLocaleString("zh-TW",{timeZone:"Asia/Taipei"});
     var confirmBtn='<button class="btn" style="font-size:11px;padding:2px 7px;color:#059669;border-color:#6ee7b7;" onclick="confirmPending(\''+r.id+'\',\''+r.drug_code+'\',\''+r.patient_id+'\','+r.quantity+')">確認轉入</button>';
     var delBtn='<button class="btn" style="font-size:11px;padding:2px 7px;color:#dc2626;border-color:#fca5a5;" onclick="window._dp(\''+r.id+'\')">刪除</button>';
     return '<div class="ur"><div style="flex:1;min-width:0;"><span class="bdg bwn" style="margin-right:4px;font-size:10px;">待更新</span><span class="mn" style="font-weight:600;">'+r.drug_code+'</span> 代號:'+pidS(r.patient_id)+' 量:'+r.quantity+' <span style="font-size:11px;color:#6b7280;">'+t+'</span></div><div style="display:flex;gap:4px;flex-shrink:0;">'+confirmBtn+delBtn+'</div></div>';
@@ -1915,7 +1915,7 @@ async function confirmPending(pid,drugCode,patientId,qty){
       var px=(r.dispense_no||"").toUpperCase()[0]||"";
       var pc=px==="A"?"douliou":px==="D"?"huwei":r.campus;
       await ins("dispensing_records",{
-        patient_account:r.patient_account||"",patient_id:r.patient_id||"",dispense_no:r.dispense_no||"",
+        patient_account:r.patient_account||"",patient_id:pidS(r.patient_id),dispense_no:r.dispense_no||"",
         drug_code:r.drug_code,quantity:r.quantity,qr_unit:r.qr_unit||"",
         stock_code:drug.stock_code,drug_name:drug.name,ctrl_level:drug.ctrl_level,drug_unit:drug.unit,
         prescribe_campus:pc,dispense_campus:r.campus,pharmacist_emp_id:r.pharmacist_emp_id,dispensed_at:r.created_at
