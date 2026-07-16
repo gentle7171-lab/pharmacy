@@ -842,7 +842,7 @@ async function procBar(raw){
   }
 
   PQ=qr; PD=drug;
-  var pc=prefix==="A"?"douliou":prefix==="D"?"huwei":(CU.campus==="douliou"?"huwei":"douliou");
+  var pc=prefix==="A"?"douliou":(prefix==="D"||prefix==="G")?"huwei":(CU.campus==="douliou"?"huwei":"douliou");
 
   // 管制藥品（管一二三）→ 跳出開方日期選擇
   var cl=drug.ctrl_level;
@@ -929,7 +929,7 @@ async function autoConvertPending(){
     var drug=Array.isArray(dr)&&dr.length?dr[0]:null;
     if(!drug) continue;
     var px=(pr.dispense_no||"").toUpperCase()[0]||"";
-    var pc=px==="A"?"douliou":px==="D"?"huwei":pr.campus;
+    var pc=px==="A"?"douliou":(px==="D"||px==="G")?"huwei":pr.campus;
     await ins("dispensing_records",{
       patient_account:pr.patient_account||"",patient_id:pidS(pr.patient_id),
       dispense_no:pr.dispense_no||"",drug_code:pr.drug_code,quantity:pr.quantity,
@@ -1913,7 +1913,7 @@ async function confirmPending(pid,drugCode,patientId,qty){
       if(!Array.isArray(pr)||!pr.length) return;
       var r=pr[0];
       var px=(r.dispense_no||"").toUpperCase()[0]||"";
-      var pc=px==="A"?"douliou":px==="D"?"huwei":r.campus;
+      var pc=px==="A"?"douliou":(px==="D"||px==="G")?"huwei":r.campus;
       await ins("dispensing_records",{
         patient_account:r.patient_account||"",patient_id:pidS(r.patient_id),dispense_no:r.dispense_no||"",
         drug_code:r.drug_code,quantity:r.quantity,qr_unit:r.qr_unit||"",
