@@ -836,7 +836,7 @@ async function procBar(raw){
   hi("bp2");
 
   if(!drug){
-    await ins("pending_records",{patient_account:qr.pa,patient_id:pidS(qr.pi),dispense_no:qr.dn,drug_code:qr.dc,quantity:qr.qt,qr_unit:qr.qu,campus:CU.campus,pharmacist_emp_id:CU.emp_id,note:"藥品台大碼不在主檔",created_at:new Date().toISOString()});
+    await ins("pending_records",{patient_id:pidS(qr.pi),dispense_no:qr.dn,drug_code:qr.dc,quantity:qr.qt,qr_unit:qr.qu,campus:CU.campus,pharmacist_emp_id:CU.emp_id,note:"藥品台大碼不在主檔",created_at:new Date().toISOString()});
     g("unk-code").textContent=qr.dc; g("unk-pid").textContent=pidS(qr.pi); g("unk-dn").textContent=qr.dn; g("unk-qty").textContent=qr.qt+" "+qr.qu;
     sh("unk-card"); LK=false; return;
   }
@@ -885,7 +885,7 @@ async function saveEmgRecord(){
   }
   hi("emg-card");
   if(!PD){
-    await ins("pending_records",{patient_account:PQ.pa,patient_id:pidS(PQ.pi),dispense_no:PQ.dn,drug_code:PQ.dc,quantity:PQ.qt,qr_unit:PQ.qu,campus:dc,pharmacist_emp_id:CU.emp_id,note:"急診處方，藥品台大碼不在主檔",created_at:new Date().toISOString()});
+    await ins("pending_records",{patient_id:pidS(PQ.pi),dispense_no:PQ.dn,drug_code:PQ.dc,quantity:PQ.qt,qr_unit:PQ.qu,campus:dc,pharmacist_emp_id:CU.emp_id,note:"急診處方，藥品台大碼不在主檔",created_at:new Date().toISOString()});
     showToast("急診暫存完成，待管理員更新主檔","ok");
     loadRecent(); return;
   }
@@ -910,7 +910,7 @@ async function saveEmgRecord(){
 async function saveRecord(qr,drug,pc,dc,rxDate){
   var today=new Date().toISOString().slice(0,10);
   var finalRxDate=rxDate||today;
-  var r=await ins("dispensing_records",{patient_account:qr.pa,patient_id:pidS(qr.pi),dispense_no:qr.dn,drug_code:qr.dc,quantity:qr.qt,qr_unit:qr.qu,stock_code:drug.stock_code,drug_name:drug.name,ctrl_level:drug.ctrl_level,drug_unit:drug.unit,prescribe_campus:pc,dispense_campus:dc,pharmacist_emp_id:CU.emp_id,prescription_date:finalRxDate,dispensed_at:new Date().toISOString()});
+  var r=await ins("dispensing_records",{patient_id:pidS(qr.pi),dispense_no:qr.dn,drug_code:qr.dc,quantity:qr.qt,qr_unit:qr.qu,stock_code:drug.stock_code,drug_name:drug.name,ctrl_level:drug.ctrl_level,drug_unit:drug.unit,prescribe_campus:pc,dispense_campus:dc,pharmacist_emp_id:CU.emp_id,prescription_date:finalRxDate,dispensed_at:new Date().toISOString()});
   if(r.error){showToast("儲存失敗","err");return;}
   showToast("已儲存："+drug.drug_code+" "+tc(drug.name),"ok");
   loadCounts(); loadRecent();
@@ -931,7 +931,7 @@ async function autoConvertPending(){
     var px=(pr.dispense_no||"").toUpperCase()[0]||"";
     var pc=px==="A"?"douliou":(px==="D"||px==="G")?"huwei":pr.campus;
     await ins("dispensing_records",{
-      patient_account:pr.patient_account||"",patient_id:pidS(pr.patient_id),
+      patient_id:pidS(pr.patient_id),
       dispense_no:pr.dispense_no||"",drug_code:pr.drug_code,quantity:pr.quantity,
       qr_unit:pr.qr_unit||"",stock_code:drug.stock_code,drug_name:drug.name,
       ctrl_level:drug.ctrl_level,drug_unit:drug.unit,
@@ -1178,8 +1178,8 @@ async function expCtrlSheet(tp){
     });
   } else {
     loadXLSX(function(){
-      var ws=[["操作時間","開方日期","病患帳號","代號","領藥號","藥品台大碼","庫存碼","管制級別","數量","單位","開方院區","領藥院區","操作藥師","核對狀態","核對人員","核對時間"]];
-      rows.forEach(function(r){ws.push([new Date(r.dispensed_at).toLocaleString("zh-TW",{timeZone:"Asia/Taipei"}),r.prescription_date||"",r.patient_account,pidS(r.patient_id),r.dispense_no,r.drug_code,r.stock_code,"管"+r.ctrl_level,r.quantity,r.drug_unit,CL[r.prescribe_campus],CL[r.dispense_campus],r.pharmacist_emp_id,r.verified?"已核對":"未核對",r.verified_by||"",r.verified_at?new Date(r.verified_at).toLocaleString("zh-TW",{timeZone:"Asia/Taipei"}):""]);});
+      var ws=[["操作時間","開方日期","代號","領藥號","藥品台大碼","庫存碼","管制級別","數量","單位","開方院區","領藥院區","操作藥師","核對狀態","核對人員","核對時間"]];
+      rows.forEach(function(r){ws.push([new Date(r.dispensed_at).toLocaleString("zh-TW",{timeZone:"Asia/Taipei"}),r.prescription_date||"",pidS(r.patient_id),r.dispense_no,r.drug_code,r.stock_code,"管"+r.ctrl_level,r.quantity,r.drug_unit,CL[r.prescribe_campus],CL[r.dispense_campus],r.pharmacist_emp_id,r.verified?"已核對":"未核對",r.verified_by||"",r.verified_at?new Date(r.verified_at).toLocaleString("zh-TW",{timeZone:"Asia/Taipei"}):""]);});
       var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(ws),"明細");
       XLSX.writeFile(wb,fn);
     });
@@ -1915,7 +1915,7 @@ async function confirmPending(pid,drugCode,patientId,qty){
       var px=(r.dispense_no||"").toUpperCase()[0]||"";
       var pc=px==="A"?"douliou":(px==="D"||px==="G")?"huwei":r.campus;
       await ins("dispensing_records",{
-        patient_account:r.patient_account||"",patient_id:pidS(r.patient_id),dispense_no:r.dispense_no||"",
+        patient_id:pidS(r.patient_id),dispense_no:r.dispense_no||"",
         drug_code:r.drug_code,quantity:r.quantity,qr_unit:r.qr_unit||"",
         stock_code:drug.stock_code,drug_name:drug.name,ctrl_level:drug.ctrl_level,drug_unit:drug.unit,
         prescribe_campus:pc,dispense_campus:r.campus,pharmacist_emp_id:r.pharmacist_emp_id,dispensed_at:r.created_at
