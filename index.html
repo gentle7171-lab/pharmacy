@@ -362,7 +362,7 @@ tr:hover td{background:#fafafa;}
         </div>
         <!-- 單筆新增 -->
         <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;">
-          <input class="inp" id="ne" placeholder="員編" style="width:90px;"/>
+          <input class="inp" id="ne" placeholder="員編" style="width:90px;" onblur="autoFillNameFromRoster()"/>
           <input class="inp" id="nn" placeholder="姓名" style="width:90px;"/>
           <select class="inp" id="nc" style="width:auto;"><option value="douliou">斗六</option><option value="huwei">虎尾</option></select>
           <select class="inp" id="nrl" style="width:auto;">
@@ -371,6 +371,8 @@ tr:hover td{background:#fafafa;}
             <option value="admin">管理員</option>
           </select>
           <button class="btn bp" style="font-size:12px;" id="au">新增</button>
+          <span id="nn-hint" style="font-size:11px;color:#9ca3af;align-self:center;"></span>
+          <button class="btn" style="font-size:12px;" onclick="syncNewEmployeesFromRoster().then(function(){loadUsers(g('ul-campus-filter').value,g('ul-role-filter').value,g('ul-search').value.trim());})">立即同步班表新進人員</button>
         </div>
         <!-- CSV 批次匯入 -->
         <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #f3f4f6;">
@@ -739,6 +741,7 @@ async function login(){
   var u=d[0];
   if((u.password_hash||"").toLowerCase()!==pw){er.textContent="密碼錯誤";er.classList.remove("hide");return;}
   CU=u; hi("ls"); sh("as");
+  if(u.role==="admin"){syncNewEmployeesFromRoster();}
   var cl=lc==="douliou"?"bdl":"bhw",lb=CL[lc];
   var roleLabel=ROLE_LABEL[u.role]||"一般";
   g("hu").innerHTML=ei+" "+u.name+' <span class="bdg '+cl+'">'+lb+'</span> <span class="bdg bgn">'+roleLabel+'</span>';
@@ -773,7 +776,7 @@ function tab(t){
   sh(map[t]); g("n"+t).classList.add("on");
   if(t==="r"&&!g("rd").value){var td=new Date().toISOString().slice(0,10);g("rd").value=td;g("rd2").value=td;}
   if(t==="p"){var td=new Date().toISOString().slice(0,10);if(!g("pd").value)g("pd").value=td;if(!g("pd2").value)g("pd2").value=td;if(CU&&(CU.role==="warehouse"||CU.role==="admin"))checkCtrlDrugs();}
-  if(t==="a"){loadUsers();}
+  if(t==="a"){loadUsers();syncNewEmployeesFromRoster().then(function(){loadUsers(g("ul-campus-filter").value,g("ul-role-filter").value,g("ul-search").value.trim());});}
   if(t==="d"){searchDrugMaster(false);loadPending();}
   if(t==="s"){
     setTimeout(function(){g("bi").focus();},100);
@@ -1457,7 +1460,32 @@ window.verifyRecord=verifyRecord;
 
 // ── 批次核對（此為舊版佔位，已由上方新版取代）─────────────
 
-// ── User name cache ───────────────────────────────────────
+// ── 班表系統新員工自動建立（唯讀名冊比對，寫入本地 users）─────
+var rosterSyncDone=false;
+async function syncNewEmployeesFromRoster(){
+  if(!window.getRosterEntries) return;
+  if(!CU||CU.role!=="admin") return;
+  try{
+    var entries=await window.getRosterEntries();
+    var existing=await sel("users","select=emp_id");
+    if(!Array.isArray(existing)) return;
+    var existSet={};
+    existing.forEach(function(u){existSet[(u.emp_id||"").toUpperCase()]=true;});
+    var newIds=Object.keys(entries).filter(function(eid){return !existSet[eid.toUpperCase()];});
+    if(!newIds.length) return;
+    var created=[];
+    for(var i=0;i<newIds.length;i++){
+      var eid=newIds[i],nm=entries[eid];
+      var r=await ups("users",{emp_id:eid,name:nm,campus:"douliou",role:"pharmacist",password_hash:eid,is_active:true},"emp_id,campus");
+      if(!r.error) created.push(eid+"（"+nm+"）");
+    }
+    if(created.length){
+      showToast("已從班表系統自動建立 "+created.length+" 位新員工帳號（預設斗六／一般藥師），請至帳號管理確認並調整院區、角色","ok");
+    }
+  }catch(e){
+    console.error("班表系統同步失敗：",e);
+  }
+}
 var userNameCache={};
 async function getUserName(empId){
   if(!empId) return "";
@@ -1577,7 +1605,30 @@ async function addUser(){
   if(!ei||!nm){alert("請填員編和姓名");return;}
   var r=await ups("users",{emp_id:ei,name:nm,campus:cp,role:rl,password_hash:ei,is_active:true},"emp_id,campus");
   if(r.error){alert("新增失敗");return;}
-  g("ne").value="";g("nn").value="";alert("已新增／更新 "+nm+"（"+ROLE_LABEL[rl]+"），密碼為員編");loadUsers("all","all","");
+  g("ne").value="";g("nn").value="";g("nn-hint").textContent="";alert("已新增／更新 "+nm+"（"+ROLE_LABEL[rl]+"），密碼為員編");loadUsers("all","all","");
+}
+
+// ── 班表系統姓名自動帶出（唯讀，僅用於新增／編輯員工帳號時輔助輸入）──
+async function autoFillNameFromRoster(){
+  var ei=g("ne").value.trim().toUpperCase();
+  var hint=g("nn-hint");
+  if(!/^Y\d{5}$/.test(ei)){hint.textContent="";return;}
+  if(!window.lookupEmployeeName){hint.textContent="";return;}
+  hint.textContent="查詢班表系統中...";
+  try{
+    var name=await window.lookupEmployeeName(ei);
+    if(name){
+      if(!g("nn").value.trim())g("nn").value=name;
+      hint.textContent="班表系統查到：「"+name+"」（可自行修改）";
+      hint.style.color="#059669";
+    }else{
+      hint.textContent="班表系統查無此員編，請手動輸入姓名";
+      hint.style.color="#9ca3af";
+    }
+  }catch(e){
+    hint.textContent="班表系統查詢失敗，請手動輸入姓名";
+    hint.style.color="#dc2626";
+  }
 }
 
 // ── CSV 批次匯入 ──────────────────────────────────────────
@@ -1973,6 +2024,56 @@ async function impDrugs(){
   });
 }
 })();
+</script>
+
+<!-- ── 班表系統 Firebase 唯讀串接：僅用於「新增／編輯員工帳號」時自動帶出姓名 ── -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+  const rosterConfig = {
+    apiKey: "AIzaSyApEBgpAFaytqPBtPTEXE-fr8o4LdzKzPA",
+    authDomain: "pharmacy-scheduling-e20ad.firebaseapp.com",
+    projectId: "pharmacy-scheduling-e20ad",
+    storageBucket: "pharmacy-scheduling-e20ad.firebasestorage.app",
+    messagingSenderId: "779276168089",
+    appId: "1:779276168089:web:c57dfd4db57beef3804108"
+  };
+
+  const rosterApp = initializeApp(rosterConfig, "rosterApp");
+  const rosterAuth = getAuth(rosterApp);
+  const rosterDb = getFirestore(rosterApp);
+
+  signInAnonymously(rosterAuth).catch(function(e){ console.error("班表系統匿名登入失敗：", e); });
+
+  const ROSTER_DOC_PATH = ["artifacts", "pharmacy-system-v1-8", "public", "data", "roster", "directory"];
+  let rosterCache = null; // 整份 entries 快取，避免重複讀取
+  let rosterCacheAt = 0;
+  const ROSTER_CACHE_TTL = 5 * 60 * 1000; // 5 分鐘
+
+  async function fetchRosterEntries() {
+    const fresh = !rosterCache || (Date.now() - rosterCacheAt > ROSTER_CACHE_TTL);
+    if (fresh) {
+      const ref = doc(rosterDb, ...ROSTER_DOC_PATH);
+      const snap = await getDoc(ref);
+      rosterCache = snap.exists() ? (snap.data().entries || {}) : {};
+      rosterCacheAt = Date.now();
+    }
+    return rosterCache;
+  }
+
+  async function lookupEmployeeName(fullId) {
+    const entries = await fetchRosterEntries();
+    return entries[fullId] || null;
+  }
+
+  async function getRosterEntries() {
+    return await fetchRosterEntries();
+  }
+
+  window.lookupEmployeeName = lookupEmployeeName;
+  window.getRosterEntries = getRosterEntries;
 </script>
 </body>
 </html>
