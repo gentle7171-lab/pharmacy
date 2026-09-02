@@ -1492,55 +1492,28 @@ window._reactivate=async function(id){
   loadUsers(g("ul-campus-filter").value,g("ul-role-filter").value,g("ul-search").value.trim());
 };
 
-// ── 班表系統完整同步（新增新人／更新姓名／停用離職人員）───────
+// ── 班表系統新員工自動建立（唯讀名冊比對，只新增，不更新姓名、不停用）──
 var rosterSyncDone=false;
 async function syncNewEmployeesFromRoster(){
   if(!window.getRosterEntries) return;
   if(!CU||CU.role!=="admin") return;
   try{
     var entries=await window.getRosterEntries();
-    var entryIds=Object.keys(entries);
-    // 安全防呆：若讀到的名冊筆數異常少（可能是連線失敗回傳空物件），
-    // 為避免誤判全體離職、大量停用帳號，直接中止本次同步
-    if(entryIds.length<3){
-      console.error("班表系統名冊筆數異常（"+entryIds.length+" 筆），本次同步已中止");
-      return;
-    }
-    var entrySet={};
-    entryIds.forEach(function(eid){entrySet[eid.toUpperCase()]=entries[eid];});
-
-    var existing=await sel("users","select=id,emp_id,name,role,is_active");
+    var existing=await sel("users","select=emp_id");
     if(!Array.isArray(existing)) return;
     var existSet={};
-    existing.forEach(function(u){existSet[(u.emp_id||"").toUpperCase()]=u;});
-
-    var created=[],createdIds=[],renamed=[],deactivated=[];
-
-    // 1) 新增本地沒有的員工
-    for(var i=0;i<entryIds.length;i++){
-      var eid=entryIds[i].toUpperCase(),nm=entries[entryIds[i]];
-      if(!existSet[eid]){
-        var r=await ups("users",{emp_id:eid,name:nm,campus:"douliou",role:"pharmacist",password_hash:eid,is_active:true},"emp_id,campus");
-        if(!r.error){created.push(eid+"（"+nm+"）");createdIds.push(eid);}
-      }else if(existSet[eid].name!==nm){
-        // 2) 姓名跟班表系統不同，更新為班表系統的最新姓名
-        await upd("users","id=eq."+existSet[eid].id,{name:nm});
-        renamed.push(eid+"："+existSet[eid].name+"→"+nm);
-      }
+    existing.forEach(function(u){existSet[(u.emp_id||"").toUpperCase()]=true;});
+    var newIds=Object.keys(entries).filter(function(eid){return !existSet[eid.toUpperCase()];});
+    if(!newIds.length) return;
+    var created=[],createdIds=[];
+    for(var i=0;i<newIds.length;i++){
+      var eid=newIds[i],nm=entries[eid];
+      var r=await ups("users",{emp_id:eid,name:nm,campus:"douliou",role:"pharmacist",password_hash:eid,is_active:true},"emp_id,campus");
+      if(!r.error){created.push(eid+"（"+nm+"）");createdIds.push(eid.toUpperCase());}
     }
-
-    // 3) 本地帳號的員編不在班表名冊 → 視為離職，自動停用（保護 admin 帳號不被自動停用，避免全體被鎖）
-    existing.forEach(function(u){
-      var eid=(u.emp_id||"").toUpperCase();
-      if(!entrySet.hasOwnProperty(eid)&&u.is_active&&u.role!=="admin"){
-        upd("users","id=eq."+u.id,{is_active:false});
-        deactivated.push(eid+"（"+u.name+"）");
-      }
-    });
-
-    if(createdIds.length) addPendingReview(createdIds);
+    if(created.length) addPendingReview(createdIds);
     updateRosterBadge();
-    console.log("班表系統同步完成",{created:created,renamed:renamed,deactivated:deactivated});
+    console.log("班表系統同步完成（新增）",created);
   }catch(e){
     console.error("班表系統同步失敗：",e);
   }
