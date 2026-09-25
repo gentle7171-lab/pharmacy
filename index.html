@@ -980,7 +980,7 @@ async function loadRecent(){
     var cl=r.ctrl_level,cb=(cl==="0")?'<span class="bdg bgn" style="font-size:10px;">一般</span>':(cl==="1"||cl==="2")?'<span class="bdg bc1" style="font-size:10px;">管'+cl+'</span>':(cl==="4")?'<span class="bdg" style="font-size:10px;background:#DBEAFE;color:#1e40af;">管4</span>':'<span class="bdg bc3" style="font-size:10px;">管'+cl+'</span>';
     var pb='<span class="bdg '+(r.prescribe_campus==="douliou"?"bdl":"bhw")+'" style="font-size:10px;">'+(r.prescribe_campus==="douliou"?"斗六":"虎尾")+'</span>';
     var db='<span class="bdg '+(r.dispense_campus==="douliou"?"bdl":"bhw")+'" style="font-size:10px;">'+(r.dispense_campus==="douliou"?"斗六":"虎尾")+'</span>';
-    return '<div class="recent-row"><div style="flex:1;min-width:0;"><span style="font-family:monospace;font-size:11px;color:#6b7280;">'+t+'</span> <strong style="font-size:12px;">'+tc(r.drug_name)+'</strong> <span style="font-size:11px;color:#6b7280;">×'+r.quantity+' '+r.drug_unit+'</span></div><div style="display:flex;gap:4px;align-items:center;flex-shrink:0;">'+cb+' '+pb+'→'+db+'</div></div>';
+    return '<div class="recent-row"><div style="flex:1;min-width:0;"><span style="font-family:monospace;font-size:11px;color:#6b7280;">'+t+'</span> <strong class="mn" style="font-size:12px;">'+(r.stock_code||"")+'</strong> <span style="font-size:11px;color:#6b7280;">×'+r.quantity+' '+r.drug_unit+'</span></div><div style="display:flex;gap:4px;align-items:center;flex-shrink:0;">'+cb+' '+pb+'→'+db+'</div></div>';
   }).join("");
 }
 
@@ -1991,7 +1991,7 @@ async function loadPending(){
 }
 window._dp=async function(id){
   g("del-msg").textContent="確定刪除此暫存紀錄？";
-  window._delCb=async function(){await del2("pending_records","id=eq."+id);loadPending();checkPending();};
+  window._delCb=async function(){await del2("pending_records","id=eq."+id);loadPending();checkPending();loadRec();};
   sh("del-modal");
 };
 
