@@ -372,7 +372,7 @@ tr:hover td{background:#fafafa;}
           </select>
           <button class="btn bp" style="font-size:12px;" id="au">新增</button>
           <span id="nn-hint" style="font-size:11px;color:#9ca3af;align-self:center;"></span>
-          <button class="btn" style="font-size:12px;" onclick="syncNewEmployeesFromRoster().then(function(){loadUsers(g('ul-campus-filter').value,g('ul-role-filter').value,g('ul-search').value.trim());})">立即同步班表系統</button>
+          <button class="btn" style="font-size:12px;" onclick="openRosterSyncModal()">從名冊同步</button>
         </div>
         <!-- CSV 批次匯入 -->
         <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #f3f4f6;">
@@ -527,6 +527,32 @@ tr:hover td{background:#fafafa;}
     <div style="display:flex;gap:8px;">
       <button class="btn bd" style="flex:1;" id="del-confirm">確認刪除</button>
       <button class="btn" style="flex:1;" id="del-cancel">取消</button>
+    </div>
+  </div>
+</div>
+<!-- 從名冊同步使用者 -->
+<div id="roster-modal" class="modal-bg hide">
+  <div class="modal" style="max-width:640px;max-height:85vh;overflow-y:auto;">
+    <h3 style="margin-bottom:10px;">從名冊同步使用者</h3>
+    <div id="roster-summary" style="font-size:12px;color:#374151;background:#F0F7FF;border:1px solid #bfdbfe;border-radius:8px;padding:10px 12px;margin-bottom:16px;"></div>
+    <div id="roster-new-section" style="margin-bottom:18px;">
+      <div style="font-size:13px;font-weight:600;color:#059669;margin-bottom:8px;">🆕 名冊新進人員（新增使用者）</div>
+      <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <thead><tr style="background:#185FA5;color:#fff;"><th style="padding:6px 8px;text-align:left;">　</th><th style="padding:6px 8px;text-align:left;">員工號</th><th style="padding:6px 8px;text-align:left;">姓名</th><th style="padding:6px 8px;text-align:left;">院區</th><th style="padding:6px 8px;text-align:left;">角色</th></tr></thead>
+        <tbody id="roster-new-tbody"></tbody>
+      </table></div>
+    </div>
+    <div id="roster-gone-section">
+      <div style="font-size:13px;font-weight:600;color:#d97706;margin-bottom:4px;">⚠ 名冊上已查無此人（可能已異動／離職）</div>
+      <div style="font-size:11px;color:#9ca3af;margin-bottom:8px;">勾選＝一併刪除該帳號；未勾選則保留，稍後可在清單中手動處理。</div>
+      <div style="overflow-x:auto;max-height:220px;overflow-y:auto;border:1px solid #f3f4f6;border-radius:8px;"><table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <thead><tr style="background:#185FA5;color:#fff;position:sticky;top:0;"><th style="padding:6px 8px;text-align:left;">　</th><th style="padding:6px 8px;text-align:left;">員工號</th><th style="padding:6px 8px;text-align:left;">姓名</th><th style="padding:6px 8px;text-align:left;">角色</th></tr></thead>
+        <tbody id="roster-gone-tbody"></tbody>
+      </table></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:18px;">
+      <button class="btn bp" style="flex:1;" onclick="window._rosterApply()">確認套用</button>
+      <button class="btn" style="flex:1;" onclick="hi('roster-modal')">取消</button>
     </div>
   </div>
 </div>
@@ -741,7 +767,8 @@ async function login(){
   var u=d[0];
   if((u.password_hash||"").toLowerCase()!==pw){er.textContent="密碼錯誤";er.classList.remove("hide");return;}
   CU=u; hi("ls"); sh("as");
-  if(u.role==="admin"){syncNewEmployeesFromRoster();updateRosterBadge();}
+  if(u.role==="admin"){checkRosterDiff();}
+
   var cl=lc==="douliou"?"bdl":"bhw",lb=CL[lc];
   var roleLabel=ROLE_LABEL[u.role]||"一般";
   g("hu").innerHTML=ei+" "+u.name+' <span class="bdg '+cl+'">'+lb+'</span> <span class="bdg bgn">'+roleLabel+'</span>';
@@ -776,7 +803,7 @@ function tab(t){
   sh(map[t]); g("n"+t).classList.add("on");
   if(t==="r"&&!g("rd").value){var td=new Date().toISOString().slice(0,10);g("rd").value=td;g("rd2").value=td;}
   if(t==="p"){var td=new Date().toISOString().slice(0,10);if(!g("pd").value)g("pd").value=td;if(!g("pd2").value)g("pd2").value=td;if(CU&&(CU.role==="warehouse"||CU.role==="admin"))checkCtrlDrugs();}
-  if(t==="a"){loadUsers();syncNewEmployeesFromRoster().then(function(){loadUsers(g("ul-campus-filter").value,g("ul-role-filter").value,g("ul-search").value.trim());});}
+  if(t==="a"){loadUsers();checkRosterDiff();}
   if(t==="d"){searchDrugMaster(false);loadPending();}
   if(t==="s"){
     setTimeout(function(){g("bi").focus();},100);
@@ -1460,64 +1487,129 @@ window.verifyRecord=verifyRecord;
 
 // ── 批次核對（此為舊版佔位，已由上方新版取代）─────────────
 
-// ── 班表新進人員「待確認」標記（本地追蹤，儲存/手動確認後自動清除）──
-function getPendingReview(){
-  try{return JSON.parse(localStorage.getItem("rosterPendingReview")||"[]");}catch(e){return [];}
-}
-function setPendingReview(arr){
-  try{localStorage.setItem("rosterPendingReview",JSON.stringify(arr));}catch(e){}
-}
-function addPendingReview(empIds){
-  var cur=getPendingReview();
-  empIds.forEach(function(id){if(cur.indexOf(id)===-1)cur.push(id);});
-  setPendingReview(cur);
-}
-function removePendingReview(empId){
-  var cur=getPendingReview().filter(function(id){return id!==empId;});
-  setPendingReview(cur);
-}
-window._ackReview=function(empId){
-  removePendingReview(empId);
-  updateRosterBadge();
-  loadUsers(g("ul-campus-filter").value,g("ul-role-filter").value,g("ul-search").value.trim());
-};
-function updateRosterBadge(){
+// ── 班表系統異動提醒（唯讀比對，不寫入任何資料，只負責顯示紅點）──
+async function checkRosterDiff(){
   var badge=g("roster-badge");
-  if(!badge) return;
-  if(getPendingReview().length>0) sh("roster-badge"); else hi("roster-badge");
-}
-window._reactivate=async function(id){
-  await upd("users","id=eq."+id,{is_active:true});
-  showToast("已重新啟用帳號","ok");
-  loadUsers(g("ul-campus-filter").value,g("ul-role-filter").value,g("ul-search").value.trim());
-};
-
-// ── 班表系統新員工自動建立（唯讀名冊比對，只新增，不更新姓名、不停用）──
-var rosterSyncDone=false;
-async function syncNewEmployeesFromRoster(){
-  if(!window.getRosterEntries) return;
-  if(!CU||CU.role!=="admin") return;
+  if(!badge||!window.getRosterEntries||!CU||CU.role!=="admin"){if(badge)hi("roster-badge");return;}
   try{
     var entries=await window.getRosterEntries();
-    var existing=await sel("users","select=emp_id");
-    if(!Array.isArray(existing)) return;
+    var entryIds=Object.keys(entries);
+    if(entryIds.length<3){hi("roster-badge");return;}
+    var entrySet={};
+    entryIds.forEach(function(eid){entrySet[eid.toUpperCase()]=entries[eid];});
+    var existing=await sel("users","select=emp_id,name");
+    if(!Array.isArray(existing)){hi("roster-badge");return;}
     var existSet={};
-    existing.forEach(function(u){existSet[(u.emp_id||"").toUpperCase()]=true;});
-    var newIds=Object.keys(entries).filter(function(eid){return !existSet[eid.toUpperCase()];});
-    if(!newIds.length) return;
-    var created=[],createdIds=[];
-    for(var i=0;i<newIds.length;i++){
-      var eid=newIds[i],nm=entries[eid];
-      var r=await ups("users",{emp_id:eid,name:nm,campus:"douliou",role:"pharmacist",password_hash:eid,is_active:true},"emp_id,campus");
-      if(!r.error){created.push(eid+"（"+nm+"）");createdIds.push(eid.toUpperCase());}
+    existing.forEach(function(u){existSet[(u.emp_id||"").toUpperCase()]=u;});
+    var hasDiff=false;
+    entryIds.forEach(function(rawId){
+      var eid=rawId.toUpperCase(),nm=entries[rawId],u=existSet[eid];
+      if(!u||u.name!==nm) hasDiff=true;
+    });
+    if(!hasDiff){
+      existing.forEach(function(u){
+        var eid=(u.emp_id||"").toUpperCase();
+        if(!entrySet.hasOwnProperty(eid)) hasDiff=true;
+      });
     }
-    if(created.length) addPendingReview(createdIds);
-    updateRosterBadge();
-    console.log("班表系統同步完成（新增）",created);
+    if(hasDiff) sh("roster-badge"); else hi("roster-badge");
   }catch(e){
-    console.error("班表系統同步失敗：",e);
+    console.error("班表系統異動檢查失敗：",e);
   }
 }
+
+// ── 從名冊同步使用者：審核視窗（新增／姓名異動／已不在名冊，逐項勾選後套用）──
+var rosterDiff=null; // {newcomers:[{eid,name}], renamed:[{id,eid,oldName,newName}], gone:[{id,eid,name,role}]}
+
+async function openRosterSyncModal(){
+  if(!window.getRosterEntries){alert("班表系統尚未連線成功，請稍後再試");return;}
+  try{
+    var entries=await window.getRosterEntries();
+    var entryIds=Object.keys(entries);
+    if(entryIds.length<3){alert("班表系統回傳名冊筆數異常（"+entryIds.length+" 筆），請稍後再試，避免誤判。");return;}
+    var entrySet={};
+    entryIds.forEach(function(eid){entrySet[eid.toUpperCase()]=entries[eid];});
+
+    var existing=await sel("users","select=id,emp_id,name,role,campus,is_active");
+    if(!Array.isArray(existing)){alert("讀取現有使用者失敗");return;}
+    var existSet={};
+    existing.forEach(function(u){existSet[(u.emp_id||"").toUpperCase()]=u;});
+
+    var newcomers=[],renamed=[],gone=[];
+    entryIds.forEach(function(rawId){
+      var eid=rawId.toUpperCase(),nm=entries[rawId];
+      var u=existSet[eid];
+      if(!u){ newcomers.push({eid:eid,name:nm}); }
+      else if(u.name!==nm){ renamed.push({id:u.id,eid:eid,oldName:u.name,newName:nm}); }
+    });
+    existing.forEach(function(u){
+      var eid=(u.emp_id||"").toUpperCase();
+      if(!entrySet.hasOwnProperty(eid)){ gone.push({id:u.id,eid:eid,name:u.name,role:u.role}); }
+    });
+
+    rosterDiff={newcomers:newcomers,renamed:renamed,gone:gone};
+
+    g("roster-summary").innerHTML="名冊共 <strong>"+entryIds.length+"</strong> 位在職人員。新增 <strong>"+newcomers.length+"</strong> 位、姓名異動 <strong>"+renamed.length+"</strong> 位、已不在名冊上 <strong>"+gone.length+"</strong> 位。請勾選要處理的項目後按「確認套用」，登入帳號將維持員工號格式（如 Y00000）。";
+
+    g("roster-new-tbody").innerHTML=newcomers.length?newcomers.map(function(n,i){
+      return '<tr data-eid="'+n.eid+'" data-name="'+n.name+'"><td style="padding:6px 8px;"><input type="checkbox" class="roster-new-chk" checked/></td>'
+        +'<td style="padding:6px 8px;" class="mn">'+n.eid+'</td><td style="padding:6px 8px;">'+n.name+'</td>'
+        +'<td style="padding:6px 8px;"><select class="inp roster-new-campus" style="font-size:11px;padding:2px 6px;"><option value="douliou">斗六</option><option value="huwei">虎尾</option></select></td>'
+        +'<td style="padding:6px 8px;"><select class="inp roster-new-role" style="font-size:11px;padding:2px 6px;"><option value="pharmacist">一般</option><option value="warehouse">藥庫</option><option value="admin">管理員</option></select></td></tr>';
+    }).join(""):'<tr><td colspan="5" style="padding:10px;text-align:center;color:#9ca3af;">無新進人員</td></tr>';
+    if(!newcomers.length) hi("roster-new-section"); else sh("roster-new-section");
+
+    g("roster-gone-tbody").innerHTML=gone.length?gone.map(function(n){
+      return '<tr data-id="'+n.id+'"><td style="padding:6px 8px;"><input type="checkbox" class="roster-gone-chk"/></td>'
+        +'<td style="padding:6px 8px;" class="mn">'+n.eid+'</td><td style="padding:6px 8px;">'+n.name+'</td><td style="padding:6px 8px;">'+(ROLE_LABEL[n.role]||n.role)+'</td></tr>';
+    }).join(""):'<tr><td colspan="4" style="padding:10px;text-align:center;color:#9ca3af;">無</td></tr>';
+
+    sh("roster-modal");
+  }catch(e){
+    console.error("讀取班表系統失敗：",e);
+    alert("讀取班表系統失敗，請稍後再試");
+  }
+}
+
+window._rosterApply=async function(){
+  if(!rosterDiff) return;
+  var createdCnt=0,renamedCnt=0,deletedCnt=0;
+
+  // 新增勾選的新進人員
+  var newRows=document.querySelectorAll("#roster-new-tbody tr[data-eid]");
+  for(var i=0;i<newRows.length;i++){
+    var row=newRows[i],chk=row.querySelector(".roster-new-chk");
+    if(chk&&chk.checked){
+      var eid=row.getAttribute("data-eid"),nm=row.getAttribute("data-name");
+      var cp=row.querySelector(".roster-new-campus").value,rl=row.querySelector(".roster-new-role").value;
+      var r=await ups("users",{emp_id:eid,name:nm,campus:cp,role:rl,password_hash:eid,is_active:true},"emp_id,campus");
+      if(!r.error) createdCnt++;
+    }
+  }
+
+  // 姓名異動：全部自動套用最新姓名
+  for(var j=0;j<rosterDiff.renamed.length;j++){
+    var rn=rosterDiff.renamed[j];
+    await upd("users","id=eq."+rn.id,{name:rn.newName});
+    renamedCnt++;
+  }
+
+  // 勾選的已不在名冊人員 → 刪除帳號
+  var goneRows=document.querySelectorAll("#roster-gone-tbody tr[data-id]");
+  for(var k=0;k<goneRows.length;k++){
+    var grow=goneRows[k],gchk=grow.querySelector(".roster-gone-chk");
+    if(gchk&&gchk.checked){
+      await del2("users","id=eq."+grow.getAttribute("data-id"));
+      deletedCnt++;
+    }
+  }
+
+  hi("roster-modal");
+  rosterDiff=null;
+  showToast("已套用：新增 "+createdCnt+" 位、更新姓名 "+renamedCnt+" 位、刪除 "+deletedCnt+" 位","ok");
+  loadUsers(g("ul-campus-filter").value,g("ul-role-filter").value,g("ul-search").value.trim());
+  checkRosterDiff();
+};
 var userNameCache={};
 async function getUserName(empId){
   if(!empId) return "";
@@ -1547,7 +1639,6 @@ async function loadUsers(campusFilter,roleFilter,searchKw){
   }
   if(!d.length){el.innerHTML='<div style="font-size:12px;color:#9ca3af;">查無帳號</div>';cnt.textContent="";return;}
   cnt.textContent="共 "+d.length+" 筆";
-  var pending=getPendingReview();
   el.innerHTML='<div style="overflow-x:auto;"><table style="width:100%;min-width:560px;border-collapse:collapse;">'
     +'<thead><tr style="font-size:11px;color:#6b7280;border-bottom:1px solid #e5e7eb;">'
     +'<th style="padding:6px 4px;"><input type="checkbox" id="chk-all-users" title="全選" onchange="window._chkAllUsers(this)"/></th>'
@@ -1557,32 +1648,28 @@ async function loadUsers(campusFilter,roleFilter,searchKw){
     +'</tr></thead><tbody>'
     +d.map(function(u){
       var cl=u.campus==="douliou"?"bdl":"bhw",lb=u.campus==="douliou"?"斗六":"虎尾";
-      var isNew=pending.indexOf((u.emp_id||"").toUpperCase())!==-1;
       var isOff=u.is_active===false;
       var rowStyle="border-bottom:1px solid #f3f4f6;font-size:12px;";
       if(isOff) rowStyle+="background:#F3F4F6;color:#9ca3af;";
-      else if(isNew) rowStyle+="background:#FFFBEB;";
       return '<tr style="'+rowStyle+'">'
         +'<td style="padding:6px 4px;"><input type="checkbox" class="user-chk" data-id="'+u.id+'" data-name="'+u.name+'" data-emp="'+(u.emp_id||"").toUpperCase()+'"/></td>'
         +'<td style="padding:6px 8px;" class="mn">'+u.emp_id+'</td>'
         +'<td style="padding:6px 8px;">'+u.name
-        +(isNew?' <span class="bdg bwn" style="font-size:10px;">🆕 班表新進</span>':'')
-        +(isOff?' <span class="bdg" style="font-size:10px;background:#e5e7eb;color:#6b7280;border:1px solid #d1d5db;">已停用（班表無此員編）</span>':'')
+        +(isOff?' <span class="bdg" style="font-size:10px;background:#e5e7eb;color:#6b7280;border:1px solid #d1d5db;">已停用</span>':'')
         +'</td>'
         +'<td style="padding:6px 4px;">'
-        +'<select id="sel-cp-'+u.id+'" class="inp" style="width:auto;font-size:11px;padding:2px 6px;'+(isNew?"border-color:#f59e0b;":"")+'">'
+        +'<select id="sel-cp-'+u.id+'" class="inp" style="width:auto;font-size:11px;padding:2px 6px;">'
         +'<option value="douliou"'+(u.campus==="douliou"?" selected":"")+'>斗六</option>'
         +'<option value="huwei"'+(u.campus==="huwei"?" selected":"")+'>虎尾</option>'
         +'</select></td>'
         +'<td style="padding:6px 4px;">'
-        +'<select id="sel-rl-'+u.id+'" class="inp" style="width:auto;font-size:11px;padding:2px 6px;'+(isNew?"border-color:#f59e0b;":"")+'">'
+        +'<select id="sel-rl-'+u.id+'" class="inp" style="width:auto;font-size:11px;padding:2px 6px;">'
         +'<option value="pharmacist"'+(u.role==="pharmacist"?" selected":"")+'>一般</option>'
         +'<option value="warehouse"'+(u.role==="warehouse"?" selected":"")+'>藥庫</option>'
         +'<option value="admin"'+(u.role==="admin"?" selected":"")+'>管理員</option>'
         +'</select></td>'
         +'<td style="padding:6px 4px;white-space:nowrap;">'
         +'<button class="btn" style="font-size:11px;padding:2px 7px;" onclick="window._rp(\''+u.id+'\',\''+u.emp_id+'\')">重設密碼</button>'
-        +(isNew?' <button class="btn" style="font-size:11px;padding:2px 7px;color:#059669;border-color:#a7f3d0;" onclick="window._ackReview(\''+(u.emp_id||"").toUpperCase()+'\')">✓ 已確認</button>':'')
         +(isOff?' <button class="btn" style="font-size:11px;padding:2px 7px;color:#185FA5;border-color:#93c5fd;" onclick="window._reactivate(\''+u.id+'\')">重新啟用</button>':'')
         +'</td></tr>';
     }).join("")
@@ -1599,7 +1686,7 @@ window._chkAllUsers=function(chk){
 window._saveAllUsers=async function(){
   var rows=document.querySelectorAll(".user-chk");
   if(!rows.length){alert("無資料");return;}
-  var changed=0,savedIds=[];
+  var changed=0;
   for(var i=0;i<rows.length;i++){
     var id=rows[i].getAttribute("data-id");
     var cp=document.getElementById("sel-cp-"+id);
@@ -1607,12 +1694,8 @@ window._saveAllUsers=async function(){
     if(cp&&rl){
       await upd("users","id=eq."+id,{campus:cp.value,role:rl.value});
       changed++;
-      savedIds.push(rows[i].getAttribute("data-emp"));
     }
   }
-  var remain=getPendingReview().filter(function(id){return savedIds.indexOf(id)===-1;});
-  setPendingReview(remain);
-  updateRosterBadge();
   showToast("已儲存 "+changed+" 筆變更","ok");
   loadUsers(g("ul-campus-filter").value,g("ul-role-filter").value,g("ul-search").value.trim());
 };
