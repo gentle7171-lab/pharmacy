@@ -425,6 +425,7 @@ tr:hover td{background:#fafafa;}
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px;">
           <input type="file" id="dm-file" accept=".xlsx,.xls" style="font-size:12px;"/>
           <button class="btn bp" style="font-size:12px;" id="dm-imp-btn">匯入更新</button>
+          <button class="btn" style="font-size:12px;" onclick="downloadDrugTemplate()">下載空白匯入格式</button>
         </div>
         <div id="dm-imp-status" style="margin-bottom:8px;font-size:12px;"></div>
 
@@ -1108,6 +1109,35 @@ async function fetchRpt(tp){
 }
 
 function loadXLSX(cb){if(window.XLSX){cb();return;}var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js";s.onload=cb;document.head.appendChild(s);}
+
+// ── 下載藥品主檔空白匯入格式 ─────────────────────────────
+function downloadDrugTemplate(){
+  loadXLSX(function(){
+    var wb=XLSX.utils.book_new();
+    var ws=XLSX.utils.aoa_to_sheet([["庫存碼","藥品台大碼","商品名","管制藥級別","計價單位"]]);
+    ws["!cols"]=[{wch:12},{wch:16},{wch:30},{wch:14},{wch:12}];
+    // 庫存碼、藥品台大碼設為文字格式，避免開頭的 0 被 Excel 吃掉
+    for(var r=2;r<=500;r++){
+      ["A","B"].forEach(function(col){ws[col+r]={t:"s",v:"",z:"@"};});
+    }
+    ws["!ref"]="A1:E500";
+    XLSX.utils.book_append_sheet(wb,ws,"藥品主檔");
+    var note=XLSX.utils.aoa_to_sheet([
+      ["欄位","必填","說明"],
+      ["庫存碼","是","4 碼庫存碼"],
+      ["藥品台大碼","是","藥品台大碼（重複的台大碼匯入時會提示）"],
+      ["商品名","否","可留空"],
+      ["管制藥級別","否","一般／管1／管2／管3／管4（或 0／1／2／3／4），留空視為一般"],
+      ["計價單位","否","例如 TAB、VIAL、BAG"],
+      ["",""," "],
+      ["注意","","請從「藥品主檔」工作表第 2 列開始填寫，標題列請勿修改或刪除；此說明工作表不會被匯入。"]
+    ]);
+    note["!cols"]=[{wch:14},{wch:8},{wch:70}];
+    XLSX.utils.book_append_sheet(wb,note,"填寫說明");
+    XLSX.writeFile(wb,"藥品主檔匯入格式.xlsx");
+  });
+}
+window.downloadDrugTemplate=downloadDrugTemplate;
 
 async function expGen(){
   var dates=getRptDates();
