@@ -280,7 +280,7 @@ tr:hover td{background:#fafafa;}
         <div style="overflow-x:auto;">
           <table style="min-width:580px;">
             <thead><tr>
-              <th><input type="checkbox" id="chk-all-g" title="全選"/></th><th>藥品台大碼</th><th>庫存碼</th><th>斗六→虎尾</th><th>虎尾→斗六</th><th>淨額</th><th>核對狀態</th><th>核對人員／時間</th>
+              <th><input type="checkbox" id="chk-all-g" title="全選"/></th><th>藥品台大碼</th><th>庫存碼</th><th>斗六開方→虎尾領</th><th>虎尾開方→斗六領</th><th>轉帳方向／數量</th><th>核對狀態</th><th>核對人員／時間</th>
             </tr></thead>
             <tbody id="vtb"></tbody>
           </table>
@@ -365,7 +365,7 @@ tr:hover td{background:#fafafa;}
         </div>
         <div style="overflow-x:auto;">
           <table style="min-width:780px;">
-            <thead><tr><th><input type="checkbox" id="chk-all-c4" title="全選"/></th><th>藥品台大碼</th><th>庫存碼</th><th>斗六→虎尾</th><th>虎尾→斗六</th><th>淨額</th><th>核對狀態</th><th>核對人員／時間</th></tr></thead>
+            <thead><tr><th><input type="checkbox" id="chk-all-c4" title="全選"/></th><th>藥品台大碼</th><th>庫存碼</th><th>斗六開方→虎尾領</th><th>虎尾開方→斗六領</th><th>轉帳方向／數量</th><th>核對狀態</th><th>核對人員／時間</th></tr></thead>
             <tbody id="vtb-c4"></tbody>
           </table>
         </div>
@@ -1185,6 +1185,13 @@ function resolveStations(dlRaw,hwRaw,anyRaw){
   }
   return {dl:dl,hw:hw};
 }
+function dirHtml(n){
+  if(!n) return '<span style="color:#6b7280;font-size:14px;">持平</span>';
+  var toDl=n>0,q=Math.abs(n);
+  var from=toDl?"虎尾":"斗六",to=toDl?"斗六":"虎尾";
+  var bg=toDl?"#FFEDD5":"#DBEAFE",fg=toDl?"#9A3412":"#1E40AF";
+  return '<span style="display:inline-block;background:'+bg+';color:'+fg+';font-weight:700;font-size:14px;padding:3px 10px;border-radius:6px;">'+from+' ➜ '+to+'</span> <span style="font-size:17px;font-weight:700;">轉 '+q+'</span>';
+}
 function stnLabel(dl,hw){return (dl&&hw)?(dl+"／"+hw):"未設定";}
 function stnGi(label){return "g"+(label==="未設定"?"none":label.replace(/[^0-9]/g,""));}
 async function loadStationMap(force){
@@ -1512,7 +1519,7 @@ async function toggleVerify(panelId,tp){
           +"<td class='mn'>"+i.dc+"</td><td class='mn'>"+i.sc+"</td>"
           +"<td style='text-align:right;'>"+i.dl_unver+"</td>"
           +"<td style='text-align:right;'>"+i.hw_unver+"</td>"
-          +"<td style='white-space:nowrap;'>"+uDir+" "+Math.abs(u)+"</td>"
+          +"<td style='white-space:nowrap;'>"+dirHtml(u)+"</td>"
           +"<td style='white-space:nowrap;'><span class='bdg bwn' style='font-size:10px;white-space:nowrap;'>未核對</span></td>"
           +"<td>"+vbtn+"</td>"
           +"</tr>");
@@ -1526,7 +1533,7 @@ async function toggleVerify(panelId,tp){
           +"<td class='mn'>"+i.dc+"</td><td class='mn'>"+i.sc+"</td>"
           +"<td style='text-align:right;'>"+i.dl_ver+"</td>"
           +"<td style='text-align:right;'>"+i.hw_ver+"</td>"
-          +"<td style='white-space:nowrap;'>"+vDir+" "+Math.abs(v)+"</td>"
+          +"<td style='white-space:nowrap;'>"+dirHtml(v)+"</td>"
           +"<td style='white-space:nowrap;'><span class='bdg ag' style='font-size:10px;white-space:nowrap;'>已核對</span></td>"
           +"<td style='font-size:11px;color:#6b7280;white-space:nowrap;'><span class='expand-arrow'>▶</span> 展開 "+i.ver_records.length+" 筆</td>"
           +"</tr>");
@@ -1597,7 +1604,7 @@ async function toggleVerify(panelId,tp){
         rows4.push("<tr style='background:#FFFBEB;'>"
           +"<td>"+chk+"</td><td class='mn'>"+i.dc+"</td><td class='mn'>"+i.sc+"</td>"
           +"<td style='text-align:right;'>"+i.dl_unver+"</td><td style='text-align:right;'>"+i.hw_unver+"</td>"
-          +"<td style='white-space:nowrap;'>"+uDir+" "+Math.abs(u)+"</td>"
+          +"<td style='white-space:nowrap;'>"+dirHtml(u)+"</td>"
           +"<td style='white-space:nowrap;'><span class='bdg bwn' style='font-size:10px;white-space:nowrap;'>未核對</span></td>"
           +"<td>"+vbtn+"</td></tr>");
       }
@@ -1608,7 +1615,7 @@ async function toggleVerify(panelId,tp){
         rows4.push("<tr style='cursor:pointer;' onclick=\"var els=document.querySelectorAll('."+safeId+"');var show=els[0]&&els[0].style.display==='none';els.forEach(function(e){e.style.display=show?'':'none';});this.querySelector('.expand-arrow').textContent=show?'▼':'▶';\">"
           +"<td></td><td class='mn'>"+i.dc+"</td><td class='mn'>"+i.sc+"</td>"
           +"<td style='text-align:right;'>"+i.dl_ver+"</td><td style='text-align:right;'>"+i.hw_ver+"</td>"
-          +"<td style='white-space:nowrap;'>"+vDir+" "+Math.abs(v)+"</td>"
+          +"<td style='white-space:nowrap;'>"+dirHtml(v)+"</td>"
           +"<td style='white-space:nowrap;'><span class='bdg ag' style='font-size:10px;white-space:nowrap;'>已核對</span></td>"
           +"<td style='font-size:11px;color:#6b7280;white-space:nowrap;'><span class='expand-arrow'>▶</span> 展開 "+i.ver_records.length+" 筆</td>"
           +"</tr>");
