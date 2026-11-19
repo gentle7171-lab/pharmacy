@@ -67,6 +67,24 @@ tr:hover td{background:#fafafa;}
 .modal-bg{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.45);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;}
 .modal{background:#fff;border-radius:12px;padding:20px;width:100%;max-width:360px;}
 .modal h3{font-size:15px;font-weight:600;margin-bottom:12px;}
+
+/* 掃碼頁與彈出視窗：文字放大 */
+#ts .btn,.modal .btn{font-size:15px;padding:9px 16px;}
+#ts .inp,.modal .inp{font-size:15px;padding:10px 12px;}
+#ts .lbl,.modal .lbl{font-size:14px;}
+#ts .al,.modal .al{font-size:14px;}
+#ts .bdg,.modal .bdg{font-size:13px;}
+#ts .sc .l{font-size:13px;}
+#ts .cbl,.modal .cbl{font-size:12px;}
+#ts .cb select,.modal .cb select{font-size:15px;}
+#ts .dbox{font-size:14px;}
+#ts .dv{font-size:13px;}
+#ts .mn,.modal .mn{font-size:13px;}
+#ts .recent-row{font-size:14px;}
+#ts table,.modal table{font-size:14px;}
+#ts th,.modal th{font-size:13px;}
+.modal h3{font-size:18px;}
+.modal{max-width:420px;}
 </style>
 </head>
 <body>
@@ -134,57 +152,54 @@ tr:hover td{background:#fafafa;}
           <div style="width:40px;height:40px;background:#EFF6FF;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#185FA5" stroke-width="1.8"><path d="M3 5v14M7 5v14M11 5v14M15 5v10M19 5v14M15 17v2"/></svg>
           </div>
-          <div><div style="font-size:14px;font-weight:600;">等待刷條碼</div><div style="font-size:12px;color:#6b7280;margin-top:2px;">刷入後自動儲存，E字頭急診需手動選院區</div></div>
+          <div><div style="font-size:16px;font-weight:600;">等待刷條碼</div><div style="font-size:14px;color:#6b7280;margin-top:2px;">刷入後自動儲存，E字頭急診需手動選院區</div></div>
         </div>
-        <input class="inp" id="bi" placeholder="請逐筆刷 QR Code" style="font-family:monospace;font-size:12px;" autocomplete="off" spellcheck="false"/>
-        <div style="margin-top:6px;font-size:11px;color:#9ca3af;">請逐筆刷入，條碼機刷入後自動送出</div>
-        <div id="bp2" class="hide" style="margin-top:6px;font-size:12px;color:#185FA5;">儲存中...</div>
+        <input class="inp" id="bi" placeholder="請逐筆刷 QR Code" style="font-family:monospace;font-size:14px;" autocomplete="off" spellcheck="false"/>
+        <div style="margin-top:6px;font-size:13px;color:#9ca3af;">請逐筆刷入，條碼機刷入後自動送出</div>
+        <div id="bp2" class="hide" style="margin-top:6px;font-size:14px;color:#185FA5;">儲存中...</div>
       </div>
 
-      <!-- Emergency confirm -->
-      <div class="card hide" id="emg-card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-          <div style="font-size:14px;font-weight:600;">急診處方－請確認院區</div>
-          <span class="bdg bc1">E字頭</span>
-        </div>
-        <div class="al ad" style="margin-bottom:12px;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          <div>急診處方兩院區共用，請手動確認<strong>開方院區</strong>及<strong>領藥院區</strong>。</div>
-        </div>
-        <div style="font-size:12px;margin-bottom:10px;">
-          <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f3f4f6;"><span style="color:#6b7280;">代號</span><span class="mn" id="e-pid"></span></div>
-          <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f3f4f6;"><span style="color:#6b7280;">領藥號</span><span class="mn" id="e-dn"></span></div>
-          <div style="display:flex;justify-content:space-between;padding:4px 0;"><span style="color:#6b7280;">藥品</span><span style="font-weight:600;" id="e-nm"></span></div>
-        </div>
-        <div class="cg">
-          <div class="cb emg"><div class="cbl e">開方院區（請選）</div>
-            <select id="e-ps"><option value="douliou">斗六院區</option><option value="huwei">虎尾院區</option></select>
+      <!-- Emergency confirm（彈出視窗：開方院區 → 領藥院區，由藥師按確認） -->
+      <div class="modal-bg hide" id="emg-card">
+        <div class="modal" style="max-width:440px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <div style="font-size:18px;font-weight:700;">急診處方－請確認院區</div>
+            <span class="bdg bc1">E字頭</span>
           </div>
-          <div style="text-align:center;color:#9ca3af;">→</div>
-          <div class="cb emg"><div class="cbl e">領藥院區（請選）</div>
-            <select id="e-ds"><option value="douliou">斗六院區</option><option value="huwei">虎尾院區</option></select>
+          <div class="al ad" style="margin-bottom:14px;">請確認以下<strong>開方院區</strong>與<strong>領藥院區</strong>是否正確，確認後才會儲存。</div>
+          <div style="font-size:16px;margin-bottom:14px;">
+            <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f3f4f6;"><span style="color:#6b7280;">代號</span><span class="mn" id="e-pid"></span></div>
+            <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f3f4f6;"><span style="color:#6b7280;">領藥號</span><span class="mn" id="e-dn"></span></div>
+            <div style="display:flex;justify-content:space-between;padding:6px 0;"><span style="color:#6b7280;">藥品</span><span style="font-weight:600;" id="e-nm"></span></div>
           </div>
-        </div>
-        <div style="display:flex;gap:8px;">
-          <button class="btn bp" style="flex:1;padding:8px;" id="e-cfm">確認儲存</button>
-          <button class="btn" style="flex:1;padding:8px;" id="e-cancel">取消</button>
+          <div class="cg">
+            <div class="cb emg"><div class="cbl e">開方院區</div><div id="e-ps-t" style="font-size:20px;font-weight:700;"></div></div>
+            <div style="text-align:center;color:#9ca3af;font-size:20px;">→</div>
+            <div class="cb emg"><div class="cbl e">領藥院區</div><div id="e-ds-t" style="font-size:20px;font-weight:700;"></div></div>
+          </div>
+          <select id="e-ps" style="display:none;"><option value="douliou">斗六院區</option><option value="huwei">虎尾院區</option></select>
+          <select id="e-ds" style="display:none;"><option value="douliou">斗六院區</option><option value="huwei">虎尾院區</option></select>
+          <div style="display:flex;gap:8px;">
+            <button class="btn bp" style="flex:1;padding:10px;" id="e-cfm">確認</button>
+            <button class="btn" style="flex:1;padding:10px;" id="e-cancel">取消</button>
+          </div>
         </div>
       </div>
 
       <!-- Ctrl drug prescription date confirm -->
       <div class="card hide" id="ctrl-date-card" style="border-color:#fcd34d;background:#FFFBEB;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-          <div style="font-size:14px;font-weight:600;color:#92400e;">管制藥品－請選開方日期</div>
+          <div style="font-size:16px;font-weight:600;color:#92400e;">管制藥品－請選開方日期</div>
           <span id="ctrl-date-level-badge" class="bdg bc1">管制</span>
         </div>
-        <div style="font-size:12px;margin-bottom:12px;">
+        <div style="font-size:14px;margin-bottom:12px;">
           <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #fef3c7;"><span style="color:#6b7280;">代號</span><span class="mn" id="cd-pid"></span></div>
           <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #fef3c7;"><span style="color:#6b7280;">領藥號</span><span class="mn" id="cd-dn"></span></div>
           <div style="display:flex;justify-content:space-between;padding:4px 0;"><span style="color:#6b7280;">藥品</span><span style="font-weight:600;" id="cd-nm"></span></div>
         </div>
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
-          <span style="font-size:13px;font-weight:600;color:#92400e;">開方日期</span>
-          <input type="date" class="inp" id="cd-date" style="width:auto;font-size:13px;font-weight:600;border-color:#fcd34d;"/>
+          <span style="font-size:15px;font-weight:600;color:#92400e;">開方日期</span>
+          <input type="date" class="inp" id="cd-date" style="width:auto;font-size:15px;font-weight:600;border-color:#fcd34d;"/>
         </div>
         <div style="display:flex;gap:8px;">
           <button class="btn bp" style="flex:1;padding:8px;background:#92400e;border-color:#92400e;" id="cd-cfm">確認儲存</button>
@@ -193,18 +208,18 @@ tr:hover td{background:#fafafa;}
       </div>
       <div class="card hide" id="unk-card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-          <div style="font-size:14px;font-weight:600;">找不到藥品主檔</div>
+          <div style="font-size:16px;font-weight:600;">找不到藥品主檔</div>
           <span class="bdg bwn">待更新</span>
         </div>
         <div class="al aw">找不到藥品台大碼 <strong id="unk-code"></strong>，已暫存此筆資料。系統已通知管理員更新藥品主檔。</div>
-        <div style="font-size:12px;color:#6b7280;">暫存資料：代號 <span id="unk-pid" class="mn"></span>，領藥號 <span id="unk-dn" class="mn"></span>，數量 <span id="unk-qty"></span></div>
-        <button class="btn" style="margin-top:10px;font-size:12px;" id="unk-ok">繼續刷碼</button>
+        <div style="font-size:14px;color:#6b7280;">暫存資料：代號 <span id="unk-pid" class="mn"></span>，領藥號 <span id="unk-dn" class="mn"></span>，數量 <span id="unk-qty"></span></div>
+        <button class="btn" style="margin-top:10px;font-size:14px;" id="unk-ok">繼續刷碼</button>
       </div>
 
       <!-- Recent records -->
       <div class="card" id="recent-card" style="padding:12px 14px;">
-        <div style="font-size:12px;font-weight:600;color:#6b7280;margin-bottom:8px;">今日互領紀錄</div>
-        <div id="recent-list"><div style="font-size:12px;color:#9ca3af;text-align:center;padding:8px 0;">尚無資料</div></div>
+        <div style="font-size:14px;font-weight:600;color:#6b7280;margin-bottom:8px;">今日互領紀錄</div>
+        <div id="recent-list"><div style="font-size:14px;color:#9ca3af;text-align:center;padding:8px 0;">尚無資料</div></div>
       </div>
     </div>
 
@@ -497,7 +512,7 @@ tr:hover td{background:#fafafa;}
         </button>
       </div>
     </div>
-    <div id="pwd-err" class="hide" style="color:#dc2626;font-size:12px;margin-bottom:8px;"></div>
+    <div id="pwd-err" class="hide" style="color:#dc2626;font-size:14px;margin-bottom:8px;"></div>
     <div style="display:flex;gap:8px;">
       <button class="btn bp" style="flex:1;" id="pwd-save">儲存</button>
       <button class="btn" style="flex:1;" id="pwd-cancel">取消</button>
@@ -509,7 +524,7 @@ tr:hover td{background:#fafafa;}
 <div id="pending-modal" class="modal-bg hide">
   <div class="modal">
     <h3 style="color:#dc2626;">⚠ 有待處理暫存紀錄</h3>
-    <p style="font-size:13px;color:#374151;margin:10px 0 16px;" id="pending-modal-msg"></p>
+    <p style="font-size:15px;color:#374151;margin:10px 0 16px;" id="pending-modal-msg"></p>
     <div style="display:flex;gap:8px;">
       <button class="btn bp" style="flex:1;" id="pending-go">前往管理頁面</button>
       <button class="btn" style="flex:1;" id="pending-later">稍後處理</button>
@@ -520,17 +535,26 @@ tr:hover td{background:#fafafa;}
 <div id="pending-confirm-modal" class="modal-bg hide">
   <div class="modal" style="max-width:440px;">
     <h3 style="margin-bottom:12px;">確認轉為正式紀錄</h3>
-    <div id="pcm-content" style="font-size:13px;color:#374151;margin-bottom:14px;max-height:300px;overflow-y:auto;"></div>
+    <div id="pcm-content" style="font-size:15px;color:#374151;margin-bottom:14px;max-height:300px;overflow-y:auto;"></div>
     <div style="display:flex;gap:8px;">
       <button class="btn bp" style="flex:1;" id="pcm-confirm">確認轉入</button>
       <button class="btn" style="flex:1;" id="pcm-cancel">取消</button>
     </div>
   </div>
 </div>
+<div id="ime-modal" class="modal-bg hide" style="z-index:200;">
+  <div class="modal" style="max-width:440px;text-align:center;">
+    <div style="font-size:40px;line-height:1;margin-bottom:8px;">⚠️</div>
+    <h3 style="font-size:20px;margin-bottom:10px;color:#dc2626;">偵測到中文輸入法</h3>
+    <p style="font-size:16px;color:#374151;line-height:1.7;margin-bottom:6px;">這次刷入的內容已<strong>作廢，未儲存</strong>。</p>
+    <p style="font-size:16px;color:#374151;line-height:1.7;margin-bottom:18px;">請先把輸入法切換成<strong>英文</strong>，再重新刷一次條碼。</p>
+    <button class="btn bp" style="width:100%;padding:12px;font-size:17px;" id="ime-ok">我知道了，重刷</button>
+  </div>
+</div>
 <div id="del-modal" class="modal-bg hide">
   <div class="modal">
     <h3>確認刪除</h3>
-    <p style="font-size:13px;color:#374151;margin-bottom:16px;" id="del-msg"></p>
+    <p style="font-size:15px;color:#374151;margin-bottom:16px;" id="del-msg"></p>
     <div style="display:flex;gap:8px;">
       <button class="btn bd" style="flex:1;" id="del-confirm">確認刪除</button>
       <button class="btn" style="flex:1;" id="del-cancel">取消</button>
@@ -541,25 +565,25 @@ tr:hover td{background:#fafafa;}
 <div id="roster-modal" class="modal-bg hide">
   <div class="modal" style="max-width:640px;max-height:85vh;overflow-y:auto;">
     <h3 style="margin-bottom:10px;">從名冊同步使用者</h3>
-    <div id="roster-summary" style="font-size:12px;color:#374151;background:#F0F7FF;border:1px solid #bfdbfe;border-radius:8px;padding:10px 12px;margin-bottom:16px;"></div>
+    <div id="roster-summary" style="font-size:14px;color:#374151;background:#F0F7FF;border:1px solid #bfdbfe;border-radius:8px;padding:10px 12px;margin-bottom:16px;"></div>
     <div id="roster-new-section" style="margin-bottom:18px;">
-      <div style="font-size:13px;font-weight:600;color:#059669;margin-bottom:8px;">🆕 名冊新進人員（新增使用者）</div>
-      <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;">
+      <div style="font-size:15px;font-weight:600;color:#059669;margin-bottom:8px;">🆕 名冊新進人員（新增使用者）</div>
+      <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:14px;">
         <thead><tr style="background:#185FA5;color:#fff;"><th style="padding:6px 8px;text-align:left;">　</th><th style="padding:6px 8px;text-align:left;">員工號</th><th style="padding:6px 8px;text-align:left;">姓名</th><th style="padding:6px 8px;text-align:left;">院區</th><th style="padding:6px 8px;text-align:left;">角色</th></tr></thead>
         <tbody id="roster-new-tbody"></tbody>
       </table></div>
     </div>
     <div id="roster-renamed-section" style="margin-bottom:18px;">
-      <div style="font-size:13px;font-weight:600;color:#185FA5;margin-bottom:8px;">✏️ 姓名異動（更新為名冊姓名）</div>
-      <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;">
+      <div style="font-size:15px;font-weight:600;color:#185FA5;margin-bottom:8px;">✏️ 姓名異動（更新為名冊姓名）</div>
+      <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:14px;">
         <thead><tr style="background:#185FA5;color:#fff;"><th style="padding:6px 8px;text-align:left;">　</th><th style="padding:6px 8px;text-align:left;">員工號</th><th style="padding:6px 8px;text-align:left;">目前姓名</th><th style="padding:6px 8px;text-align:left;">名冊姓名</th></tr></thead>
         <tbody id="roster-renamed-tbody"></tbody>
       </table></div>
     </div>
     <div id="roster-gone-section">
-      <div style="font-size:13px;font-weight:600;color:#d97706;margin-bottom:4px;">⚠ 名冊上已查無此人（可能已異動／離職）</div>
-      <div style="font-size:11px;color:#9ca3af;margin-bottom:8px;">勾選＝一併刪除該帳號；未勾選則保留，稍後可在清單中手動處理。</div>
-      <div style="overflow-x:auto;max-height:220px;overflow-y:auto;border:1px solid #f3f4f6;border-radius:8px;"><table style="width:100%;border-collapse:collapse;font-size:12px;">
+      <div style="font-size:15px;font-weight:600;color:#d97706;margin-bottom:4px;">⚠ 名冊上已查無此人（可能已異動／離職）</div>
+      <div style="font-size:13px;color:#9ca3af;margin-bottom:8px;">勾選＝一併刪除該帳號；未勾選則保留，稍後可在清單中手動處理。</div>
+      <div style="overflow-x:auto;max-height:220px;overflow-y:auto;border:1px solid #f3f4f6;border-radius:8px;"><table style="width:100%;border-collapse:collapse;font-size:14px;">
         <thead><tr style="background:#185FA5;color:#fff;position:sticky;top:0;"><th style="padding:6px 8px;text-align:left;">　</th><th style="padding:6px 8px;text-align:left;">員工號</th><th style="padding:6px 8px;text-align:left;">姓名</th><th style="padding:6px 8px;text-align:left;">角色</th></tr></thead>
         <tbody id="roster-gone-tbody"></tbody>
       </table></div>
@@ -626,6 +650,16 @@ g("bi").oninput=function(){
     if(cur) procBar(cur);
   },300);
 };
+// ── 中文輸入法防呆：偵測到中文／全形／輸入法組字，作廢本次刷入並提醒切換英文 ──
+var IME_RE=/[\u3000-\u303f\u3100-\u312f\u3400-\u9fff\uff00-\uffef]/;
+function showImeWarn(){
+  clearTimeout(_biTimer);
+  g("bi").value="";
+  if(g("ime-modal").classList.contains("hide")) sh("ime-modal");
+}
+g("ime-ok").onclick=function(){hi("ime-modal");g("bi").value="";g("bi").focus();};
+g("bi").addEventListener("compositionstart",showImeWarn);
+g("bi").addEventListener("compositionend",function(){g("bi").value="";});
 g("e-cfm").onclick=saveEmgRecord; g("e-cancel").onclick=function(){hi("emg-card");g("bi").value="";g("bi").focus();};
 g("cd-cfm").onclick=saveCtrlRecord; g("cd-cancel").onclick=function(){hi("ctrl-date-card");g("bi").value="";g("bi").focus();};
 g("unk-ok").onclick=function(){hi("unk-card");g("bi").value="";g("bi").focus();};
@@ -850,6 +884,7 @@ function getRxDateTime(){
 }
 async function procBar(raw){
   if(LK||!raw) return;
+  if(IME_RE.test(raw)){showImeWarn();return;}
   LK=true; g("bi").value=""; sh("bp2");
   hi("emg-card"); hi("unk-card");
 
@@ -871,6 +906,7 @@ async function procBar(raw){
     g("e-nm").textContent=drug?tc(drug.name):qr.dc+"（主檔待更新）";
     var oth=CU.campus==="douliou"?"huwei":"douliou";
     g("e-ps").value=oth; g("e-ds").value=CU.campus;
+    g("e-ps-t").textContent=(oth==="douliou"?"斗六院區":"虎尾院區"); g("e-ds-t").textContent=(CU.campus==="douliou"?"斗六院區":"虎尾院區");
     sh("emg-card"); LK=false; return;
   }
 
@@ -886,7 +922,7 @@ async function procBar(raw){
   }
 
   PQ=qr; PD=drug;
-  var pc=prefix==="A"?"douliou":(prefix==="D"||prefix==="G")?"huwei":(CU.campus==="douliou"?"huwei":"douliou");
+  var pc=(prefix==="A"||prefix==="P")?"douliou":(prefix==="D"||prefix==="G"||prefix==="U")?"huwei":(CU.campus==="douliou"?"huwei":"douliou");
 
   // 管制藥品（管一二三）→ 跳出開方日期選擇
   var cl=drug.ctrl_level;
@@ -973,7 +1009,7 @@ async function autoConvertPending(){
     var drug=Array.isArray(dr)&&dr.length?dr[0]:null;
     if(!drug) continue;
     var px=(pr.dispense_no||"").toUpperCase()[0]||"";
-    var pc=px==="A"?"douliou":(px==="D"||px==="G")?"huwei":pr.campus;
+    var pc=(px==="A"||px==="P")?"douliou":(px==="D"||px==="G"||px==="U")?"huwei":pr.campus;
     await ins("dispensing_records",{
       patient_id:pidS(pr.patient_id),
       dispense_no:pr.dispense_no||"",drug_code:pr.drug_code,quantity:pr.quantity,
@@ -1015,13 +1051,13 @@ async function loadRecent(){
   var td=new Date().toLocaleDateString("zh-TW",{timeZone:"Asia/Taipei"}).replace(/\//g,"-").replace(/(\d+)-(\d+)-(\d+)/,function(m,y,mo,d){return y+"-"+mo.padStart(2,"0")+"-"+d.padStart(2,"0");});
   var data=await sel("dispensing_records","dispensed_at=gte."+twDateToUtc(td,false)+"&dispensed_at=lte."+twDateToUtc(td,true)+"&order=dispensed_at.desc&limit=5&select=*");
   var el=g("recent-list");
-  if(!Array.isArray(data)||!data.length){el.innerHTML='<div style="font-size:12px;color:#9ca3af;text-align:center;padding:8px 0;">尚無資料</div>';return;}
+  if(!Array.isArray(data)||!data.length){el.innerHTML='<div style="font-size:14px;color:#9ca3af;text-align:center;padding:8px 0;">尚無資料</div>';return;}
   el.innerHTML=data.map(function(r){
     var t=new Date(r.dispensed_at).toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit",timeZone:"Asia/Taipei"});
-    var cl=r.ctrl_level,cb=(cl==="0")?'<span class="bdg bgn" style="font-size:10px;">一般</span>':(cl==="1"||cl==="2")?'<span class="bdg bc1" style="font-size:10px;">管'+cl+'</span>':(cl==="4")?'<span class="bdg" style="font-size:10px;background:#DBEAFE;color:#1e40af;">管4</span>':'<span class="bdg bc3" style="font-size:10px;">管'+cl+'</span>';
-    var pb='<span class="bdg '+(r.prescribe_campus==="douliou"?"bdl":"bhw")+'" style="font-size:10px;">'+(r.prescribe_campus==="douliou"?"斗六":"虎尾")+'</span>';
-    var db='<span class="bdg '+(r.dispense_campus==="douliou"?"bdl":"bhw")+'" style="font-size:10px;">'+(r.dispense_campus==="douliou"?"斗六":"虎尾")+'</span>';
-    return '<div class="recent-row"><div style="flex:1;min-width:0;"><span style="font-family:monospace;font-size:11px;color:#6b7280;">'+t+'</span> <strong class="mn" style="font-size:12px;">'+(r.stock_code||"")+'</strong> <span style="font-size:11px;color:#6b7280;">×'+r.quantity+' '+r.drug_unit+'</span></div><div style="display:flex;gap:4px;align-items:center;flex-shrink:0;">'+cb+' '+pb+'→'+db+'</div></div>';
+    var cl=r.ctrl_level,cb=(cl==="0")?'<span class="bdg bgn" style="font-size:12px;">一般</span>':(cl==="1"||cl==="2")?'<span class="bdg bc1" style="font-size:12px;">管'+cl+'</span>':(cl==="4")?'<span class="bdg" style="font-size:12px;background:#DBEAFE;color:#1e40af;">管4</span>':'<span class="bdg bc3" style="font-size:12px;">管'+cl+'</span>';
+    var pb='<span class="bdg '+(r.prescribe_campus==="douliou"?"bdl":"bhw")+'" style="font-size:12px;">'+(r.prescribe_campus==="douliou"?"斗六":"虎尾")+'</span>';
+    var db='<span class="bdg '+(r.dispense_campus==="douliou"?"bdl":"bhw")+'" style="font-size:12px;">'+(r.dispense_campus==="douliou"?"斗六":"虎尾")+'</span>';
+    return '<div class="recent-row"><div style="flex:1;min-width:0;"><span style="font-family:monospace;font-size:13px;color:#6b7280;">'+t+'</span> <strong class="mn" style="font-size:14px;">'+(r.stock_code||"")+'</strong> <span style="font-size:13px;color:#6b7280;">×'+r.quantity+' '+r.drug_unit+'</span></div><div style="display:flex;gap:4px;align-items:center;flex-shrink:0;">'+cb+' '+pb+'→'+db+'</div></div>';
   }).join("");
 }
 
@@ -2121,13 +2157,35 @@ async function loadPending(){
     cnt.textContent="";return;
   }
   cnt.textContent="共 "+d.length+" 筆待處理";
-  el.innerHTML=d.map(function(r){
+  var BAD=/[^\x20-\x7E]/;
+  function isBad(r){return BAD.test((r.drug_code||"")+(r.patient_id||"")+(r.dispense_no||""));}
+  function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+  var badRows=d.filter(isBad);
+  var badBar=badRows.length?'<div class="al ad" style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;"><span>偵測到 <strong>'+badRows.length+'</strong> 筆含中文或亂碼的暫存紀錄（多半是中文輸入法造成）</span><button class="btn" style="font-size:12px;padding:3px 10px;color:#dc2626;border-color:#fca5a5;background:#fff;white-space:nowrap;" onclick="window._delBadPending()">刪除亂碼紀錄</button></div>':'';
+  window._badPendingIds=badRows.map(function(r){return r.id;});
+  el.innerHTML=badBar+d.map(function(r){
     var t=new Date(r.created_at).toLocaleString("zh-TW",{timeZone:"Asia/Taipei"});
+    if(isBad(r)){
+      return '<div class="ur"><div style="flex:1;min-width:0;"><span class="bdg" style="margin-right:4px;font-size:10px;background:#FEE2E2;color:#b91c1c;border:1px solid #fca5a5;">亂碼</span><span class="mn" style="font-weight:600;">'+esc(r.drug_code)+'</span> 代號:'+esc(pidS(r.patient_id))+' 量:'+esc(r.quantity)+' <span style="font-size:11px;color:#6b7280;">'+t+'</span></div><div style="display:flex;gap:4px;flex-shrink:0;"><button class="btn" style="font-size:11px;padding:2px 7px;color:#dc2626;border-color:#fca5a5;" onclick="window._dp(\''+r.id+'\')">刪除</button></div></div>';
+    }
     var confirmBtn='<button class="btn" style="font-size:11px;padding:2px 7px;color:#059669;border-color:#6ee7b7;" onclick="confirmPending(\''+r.id+'\',\''+r.drug_code+'\',\''+r.patient_id+'\','+r.quantity+')">確認轉入</button>';
     var delBtn='<button class="btn" style="font-size:11px;padding:2px 7px;color:#dc2626;border-color:#fca5a5;" onclick="window._dp(\''+r.id+'\')">刪除</button>';
     return '<div class="ur"><div style="flex:1;min-width:0;"><span class="bdg bwn" style="margin-right:4px;font-size:10px;">待更新</span><span class="mn" style="font-weight:600;">'+r.drug_code+'</span> 代號:'+pidS(r.patient_id)+' 量:'+r.quantity+' <span style="font-size:11px;color:#6b7280;">'+t+'</span></div><div style="display:flex;gap:4px;flex-shrink:0;">'+confirmBtn+delBtn+'</div></div>';
   }).join("");
 }
+window._delBadPending=function(){
+  var ids=(window._badPendingIds||[]).slice();
+  if(!ids.length) return;
+  g("del-msg").textContent="確定刪除 "+ids.length+" 筆含中文／亂碼的暫存紀錄？此操作無法復原。";
+  window._delCb=async function(){
+    for(var i=0;i<ids.length;i+=50){
+      await del2("pending_records","id=in.("+ids.slice(i,i+50).join(",")+")");
+    }
+    showToast("已刪除 "+ids.length+" 筆亂碼暫存紀錄","ok");
+    loadPending();checkPending();loadRec();
+  };
+  sh("del-modal");
+};
 window._dp=async function(id){
   g("del-msg").textContent="確定刪除此暫存紀錄？";
   window._delCb=async function(){await del2("pending_records","id=eq."+id);loadPending();checkPending();loadRec();};
@@ -2150,7 +2208,7 @@ async function confirmPending(pid,drugCode,patientId,qty){
       if(!Array.isArray(pr)||!pr.length) return;
       var r=pr[0];
       var px=(r.dispense_no||"").toUpperCase()[0]||"";
-      var pc=px==="A"?"douliou":(px==="D"||px==="G")?"huwei":r.campus;
+      var pc=(px==="A"||px==="P")?"douliou":(px==="D"||px==="G"||px==="U")?"huwei":r.campus;
       await ins("dispensing_records",{
         patient_id:pidS(r.patient_id),dispense_no:r.dispense_no||"",
         drug_code:r.drug_code,quantity:r.quantity,qr_unit:r.qr_unit||"",
