@@ -2172,11 +2172,34 @@ async function searchDrugMaster(all){
       +"<td class='mn'>"+d.stock_code+"</td><td class='mn'>"+d.drug_code+"</td>"
       +"<td>"+cb+"</td><td class='mn'>"+d.unit+"</td>"
       +"<td class='mn'>"+(STN.supported?((d.station_dl&&d.station_hw)?(d.station_dl+"／"+d.station_hw):"<span style='color:#dc2626;font-weight:600;'>未設定</span>"):"－")+"</td>"
-      +"<td><button class='btn' style='font-size:11px;padding:2px 7px;color:#dc2626;border-color:#fca5a5;' onclick=\"window._delDrug('"+dc+"','"+nm+"')\">刪除</button></td>"
+      +"<td style='white-space:nowrap;'><button class='btn' style='font-size:11px;padding:2px 7px;margin-right:4px;' onclick=\"window._editCtrl('"+dc+"','"+cl+"','"+(d.station_dl||"")+"','"+(d.station_hw||"")+"')\">編輯</button><button class='btn' style='font-size:11px;padding:2px 7px;color:#dc2626;border-color:#fca5a5;' onclick=\"window._delDrug('"+dc+"','"+nm+"')\">刪除</button></td>"
       +"</tr>";
   }).join("");
 }
 
+
+// ── 手動修改管制級別（僅影響之後的刷碼，已存在的紀錄不變）
+window._editCtrl=function(dc,cur,sdl,shw){
+  var opts=[["0","一般"],["1","管1"],["2","管2"],["3","管3"],["4","管4"]].map(function(o){return '<option value="'+o[0]+'"'+(o[0]===String(cur)?' selected':'')+'>'+o[1]+'</option>';}).join("");
+  var stnCur=(sdl&&shw)?(sdl+"／"+shw):"未設定";
+  stnConfirm("編輯藥品",'藥品台大碼 <strong class="mn">'+dc+'</strong>'
+    +'<div style="margin-top:10px;font-size:13px;color:#6b7280;">管制級別</div><select class="inp" id="ec-sel" style="font-size:16px;padding:8px 10px;">'+opts+'</select>'
+    +'<div style="margin-top:10px;font-size:13px;color:#6b7280;">藥站（目前：'+stnCur+'；只填一個即可，如 6100 或 00，留空＝不變）</div><input class="inp" id="ec-stn" maxlength="4" inputmode="numeric" style="font-size:16px;padding:8px 10px;" placeholder="6100"/>'
+    +'<div style="margin-top:8px;color:#6b7280;font-size:13px;">管制級別只影響之後刷碼的紀錄，已刷的紀錄不變。</div>',async function(){
+    var v=g("ec-sel").value,sv=g("ec-stn").value.trim();
+    var body={};
+    if(v!==String(cur)) body.ctrl_level=v;
+    if(sv){
+      var r=resolveStations("","",sv);
+      if(!r||r.err){alert(r&&r.err?r.err:"藥站格式錯誤");return;}
+      body.station_dl=r.dl;body.station_hw=r.hw;
+    }
+    if(!Object.keys(body).length) return;
+    var ok=await upd("drugs","drug_code=eq."+encodeURIComponent(dc),body);
+    showToast(ok?"已更新":"修改失敗",ok?"ok":"err");
+    if(ok){STN.map=null;searchDrugMaster(false);}
+  },"確認修改");
+};
 
 // ── 藥站：批次設定／匯入（只補不新增）／匯出目前主檔 ─────────────
 window._batchSetStn=function(){
