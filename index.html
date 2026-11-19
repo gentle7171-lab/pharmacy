@@ -1190,7 +1190,7 @@ function dirHtml(n){
   var toDl=n>0,q=Math.abs(n);
   var from=toDl?"虎尾":"斗六",to=toDl?"斗六":"虎尾";
   var bg=toDl?"#FFEDD5":"#DBEAFE",fg=toDl?"#9A3412":"#1E40AF";
-  return '<span style="display:inline-block;background:'+bg+';color:'+fg+';font-weight:700;font-size:14px;padding:3px 10px;border-radius:6px;">'+from+' ➜ '+to+'</span> <span style="font-size:17px;font-weight:700;">轉 '+q+'</span>';
+  return '<span style="display:inline-block;background:'+bg+';color:'+fg+';font-weight:700;font-size:15px;padding:3px 10px;border-radius:6px;">'+from+' ➜ '+to+'</span> <span style="font-size:15px;font-weight:700;">轉 '+q+'</span>';
 }
 // 依「藥站 → 轉帳方向」分組；rows 內以 \u0001g|d 標記每個區塊（d: 1=虎尾轉斗六, 2=斗六轉虎尾, 3=持平）
 function stnDirRow(g,d,span){
