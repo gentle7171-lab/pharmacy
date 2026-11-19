@@ -130,8 +130,8 @@ tr:hover td{background:#fafafa;}
       <button class="nb on" id="ns">掃碼</button>
       <button class="nb" id="nr">紀錄</button>
       <button class="nb hide" id="np" style="position:relative;">報表<span id="ctrl-badge" class="hide" style="position:absolute;top:2px;right:2px;width:8px;height:8px;background:#dc2626;border-radius:50%;"></span></button>
-      <button class="nb hide" id="na" style="position:relative;">管理<span id="pending-badge" class="hide" style="position:absolute;top:2px;right:2px;width:8px;height:8px;background:#dc2626;border-radius:50%;"></span><span id="roster-badge" class="hide" style="position:absolute;top:2px;left:2px;width:8px;height:8px;background:#f59e0b;border-radius:50%;"></span></button>
-      <button class="nb hide" id="nd">藥品主檔</button>
+      <button class="nb hide" id="na" style="position:relative;">管理<span id="roster-badge" class="hide" style="position:absolute;top:2px;left:2px;width:8px;height:8px;background:#f59e0b;border-radius:50%;"></span></button>
+      <button class="nb hide" id="nd" style="position:relative;">藥品主檔<span id="pending-badge" class="hide" style="position:absolute;top:2px;right:2px;width:8px;height:8px;background:#dc2626;border-radius:50%;"></span></button>
     </nav>
     <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:#6b7280;">
       <span id="hu"></span>
@@ -380,7 +380,6 @@ tr:hover td{background:#fafafa;}
       <div class="card" style="margin-bottom:12px;">
         <div style="font-size:13px;font-weight:600;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #e5e7eb;">
           新增使用者
-          <span id="pending-badge" class="hide" style="display:inline-block;background:#dc2626;color:#fff;border-radius:20px;font-size:11px;padding:1px 7px;margin-left:6px;"></span>
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
           <input class="inp" id="ne" placeholder="員編" style="width:90px;" onblur="autoFillNameFromRoster()"/>
