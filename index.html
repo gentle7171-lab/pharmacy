@@ -1219,6 +1219,19 @@ function stnDirGroup(rows,cls,span){
   });
   return out;
 }
+// 匯出用：回傳「哪個藥站轉哪個藥站」，例如 6200→6100（虎尾轉斗六）
+function stnFlow(smap,dc,pc,dcamp){
+  var m=smap&&smap[dc],dl=m&&m.dl,hw=m&&m.hw,ok=!!(dl&&hw);
+  if(pc==="douliou"&&dcamp==="huwei") return ok?hw+"→"+dl:"未設定（虎尾→斗六）";
+  if(pc==="huwei"&&dcamp==="douliou") return ok?dl+"→"+hw:"未設定（斗六→虎尾）";
+  return ok?"同院區 "+dl+"／"+hw:"未設定";
+}
+function stnFlowNet(smap,dc,dirTxt){
+  var m=smap&&smap[dc],dl=m&&m.dl,hw=m&&m.hw,ok=!!(dl&&hw);
+  if(dirTxt==="虎尾轉斗六") return ok?hw+"→"+dl:"未設定（虎尾→斗六）";
+  if(dirTxt==="斗六轉虎尾") return ok?dl+"→"+hw:"未設定（斗六→虎尾）";
+  return ok?"持平 "+dl+"／"+hw:"持平（未設定）";
+}
 function stnLabel(dl,hw){return (dl&&hw)?(dl+"／"+hw):"未設定";}
 function stnGi(label){return "g"+(label==="未設定"?"none":label.replace(/[^0-9]/g,""));}
 async function loadStationMap(force){
@@ -1285,7 +1298,7 @@ function appendStnSheets(wb,net,smap){
   var hdr=net[0];
   var body=net.slice(1).map(function(r){return {g:stnOf(smap,r[0]),r:r};});
   body.sort(function(a,b){var x=stnSort(a.g,b.g);return x!==0?x:(a.r[0]<b.r[0]?-1:a.r[0]>b.r[0]?1:0);});
-  var all=[["藥站"].concat(hdr)].concat(body.map(function(x){return [x.g].concat(x.r);}));
+  var all=[["轉帳藥站"].concat(hdr)].concat(body.map(function(x){return [stnFlowNet(smap,x.r[0],x.r[5])].concat(x.r);}));
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(all),"淨額統計");
   var groups={};
   body.forEach(function(x){(groups[x.g]=groups[x.g]||[hdr]).push(x.r);});
@@ -1389,7 +1402,7 @@ async function expGen(){
         else if(isHW) nm[r.drug_code].hw_unver+=r.quantity;
       }
     });
-    var net=[["藥品台大碼","庫存碼","單位","斗六→虎尾","虎尾→斗六","淨額方向","淨額","核對狀態","核對人員","核對時間"]];
+    var net=[["藥品台大碼","庫存碼","單位","斗六開方→虎尾領","虎尾開方→斗六領","淨額方向","淨額","核對狀態","核對人員","核對時間"]];
     Object.values(nm).forEach(function(i){
       if(i.dl_unver>0||i.hw_unver>0){
         var u=i.dl_unver-i.hw_unver;
@@ -1401,7 +1414,7 @@ async function expGen(){
       }
     });
     // Sheet2：核對明細（含刷條碼時間）
-    var det=[["刷碼時間","代號","領藥號","藥品台大碼","庫存碼","藥站","數量","單位","開方院區","領藥院區","操作藥師","核對狀態","核對人員","核對時間"]];
+    var det=[["刷碼時間","代號","領藥號","藥品台大碼","庫存碼","轉帳藥站","數量","單位","開方院區","領藥院區","操作藥師","核對狀態","核對人員","核對時間"]];
     rows.forEach(function(r){
       det.push([
         r.dispensed_at?new Date(r.dispensed_at).toLocaleString("zh-TW",{timeZone:"Asia/Taipei"}):"",
@@ -1409,7 +1422,7 @@ async function expGen(){
         r.dispense_no||"",
         r.drug_code||"",
         r.stock_code||"",
-        stnOf(smap,r.drug_code),
+        stnFlow(smap,r.drug_code,r.prescribe_campus,r.dispense_campus),
         r.quantity,
         r.drug_unit||"",
         CL[r.prescribe_campus]||r.prescribe_campus||"",
@@ -1452,13 +1465,13 @@ async function expCtrlSheet(tp){
           else if(isHW) nm[r.drug_code].hw_unver+=r.quantity;
         }
       });
-      var net=[["藥品台大碼","庫存碼","單位","斗六→虎尾","虎尾→斗六","淨額方向","淨額","核對狀態","核對人員","核對時間"]];
+      var net=[["藥品台大碼","庫存碼","單位","斗六開方→虎尾領","虎尾開方→斗六領","淨額方向","淨額","核對狀態","核對人員","核對時間"]];
       Object.values(nm).forEach(function(i){
         if(i.dl_unver>0||i.hw_unver>0){var u=i.dl_unver-i.hw_unver;net.push([i.dc,i.sc,i.u,i.dl_unver,i.hw_unver,u>0?"虎尾轉斗六":u<0?"斗六轉虎尾":"持平",Math.abs(u),"未核對","",""]);};
         if(i.dl_ver>0||i.hw_ver>0){var v=i.dl_ver-i.hw_ver;net.push([i.dc,i.sc,i.u,i.dl_ver,i.hw_ver,v>0?"虎尾轉斗六":v<0?"斗六轉虎尾":"持平",Math.abs(v),"已核對",nameMap[i.vby]||i.vby||"",i.vat?new Date(i.vat).toLocaleString("zh-TW",{timeZone:"Asia/Taipei"}):""]);};
       });
-      var det=[["刷碼時間","代號","領藥號","藥品台大碼","庫存碼","藥站","數量","單位","開方院區","領藥院區","操作藥師","核對狀態","核對人員","核對時間"]];
-      rows.forEach(function(r){det.push([r.dispensed_at?new Date(r.dispensed_at).toLocaleString("zh-TW",{timeZone:"Asia/Taipei"}):"",pidS(r.patient_id),r.dispense_no||"",r.drug_code||"",r.stock_code||"",stnOf(smap,r.drug_code),r.quantity,r.drug_unit||"",CL[r.prescribe_campus]||"",CL[r.dispense_campus]||"",r.pharmacist_emp_id||"",r.verified?"已核對":"未核對",r.verified?(nameMap[r.verified_by]||r.verified_by||""):"",r.verified_at?new Date(r.verified_at).toLocaleString("zh-TW",{timeZone:"Asia/Taipei"}):""]);});
+      var det=[["刷碼時間","代號","領藥號","藥品台大碼","庫存碼","轉帳藥站","數量","單位","開方院區","領藥院區","操作藥師","核對狀態","核對人員","核對時間"]];
+      rows.forEach(function(r){det.push([r.dispensed_at?new Date(r.dispensed_at).toLocaleString("zh-TW",{timeZone:"Asia/Taipei"}):"",pidS(r.patient_id),r.dispense_no||"",r.drug_code||"",r.stock_code||"",stnFlow(smap,r.drug_code,r.prescribe_campus,r.dispense_campus),r.quantity,r.drug_unit||"",CL[r.prescribe_campus]||"",CL[r.dispense_campus]||"",r.pharmacist_emp_id||"",r.verified?"已核對":"未核對",r.verified?(nameMap[r.verified_by]||r.verified_by||""):"",r.verified_at?new Date(r.verified_at).toLocaleString("zh-TW",{timeZone:"Asia/Taipei"}):""]);});
       var wb=XLSX.utils.book_new();
       appendStnSheets(wb,net,smap);
       XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(det),"核對明細");
@@ -1467,8 +1480,8 @@ async function expCtrlSheet(tp){
   } else {
     var smap=await loadStationMap();
     loadXLSX(function(){
-      var ws=[["操作時間","開方日期","代號","領藥號","藥品台大碼","庫存碼","藥站","管制級別","數量","單位","開方院區","領藥院區","操作藥師","核對狀態","核對人員","核對時間"]];
-      rows.forEach(function(r){ws.push([new Date(r.dispensed_at).toLocaleString("zh-TW",{timeZone:"Asia/Taipei"}),r.prescription_date||"",pidS(r.patient_id),r.dispense_no,r.drug_code,r.stock_code,stnOf(smap,r.drug_code),"管"+r.ctrl_level,r.quantity,r.drug_unit,CL[r.prescribe_campus],CL[r.dispense_campus],r.pharmacist_emp_id,r.verified?"已核對":"未核對",r.verified_by||"",r.verified_at?new Date(r.verified_at).toLocaleString("zh-TW",{timeZone:"Asia/Taipei"}):""]);});
+      var ws=[["操作時間","開方日期","代號","領藥號","藥品台大碼","庫存碼","轉帳藥站","管制級別","數量","單位","開方院區","領藥院區","操作藥師","核對狀態","核對人員","核對時間"]];
+      rows.forEach(function(r){ws.push([new Date(r.dispensed_at).toLocaleString("zh-TW",{timeZone:"Asia/Taipei"}),r.prescription_date||"",pidS(r.patient_id),r.dispense_no,r.drug_code,r.stock_code,stnFlow(smap,r.drug_code,r.prescribe_campus,r.dispense_campus),"管"+r.ctrl_level,r.quantity,r.drug_unit,CL[r.prescribe_campus],CL[r.dispense_campus],r.pharmacist_emp_id,r.verified?"已核對":"未核對",r.verified_by||"",r.verified_at?new Date(r.verified_at).toLocaleString("zh-TW",{timeZone:"Asia/Taipei"}):""]);});
       var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(ws),"明細");
       XLSX.writeFile(wb,fn);
     });
