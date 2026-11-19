@@ -278,9 +278,9 @@ tr:hover td{background:#fafafa;}
           </div>
         </div>
         <div style="overflow-x:auto;">
-          <table style="min-width:580px;">
+          <table style="min-width:946px;table-layout:fixed;">
             <thead><tr>
-              <th><input type="checkbox" id="chk-all-g" title="全選"/></th><th>藥品台大碼</th><th>庫存碼</th><th>斗六開方→虎尾領</th><th>虎尾開方→斗六領</th><th>轉帳方向／數量</th><th>核對狀態</th><th>核對人員／時間</th>
+              <th style="width:36px;"><input type="checkbox" id="chk-all-g" title="全選"/></th><th style="width:120px;">藥品台大碼</th><th style="width:80px;">庫存碼</th><th style="width:110px;text-align:right;">斗六開方<br>→虎尾領</th><th style="width:110px;text-align:right;">虎尾開方<br>→斗六領</th><th style="width:250px;">轉帳方向／數量</th><th style="width:90px;">核對狀態</th><th style="width:150px;">核對人員／時間</th>
             </tr></thead>
             <tbody id="vtb"></tbody>
           </table>
@@ -364,8 +364,8 @@ tr:hover td{background:#fafafa;}
           </div>
         </div>
         <div style="overflow-x:auto;">
-          <table style="min-width:780px;">
-            <thead><tr><th><input type="checkbox" id="chk-all-c4" title="全選"/></th><th>藥品台大碼</th><th>庫存碼</th><th>斗六開方→虎尾領</th><th>虎尾開方→斗六領</th><th>轉帳方向／數量</th><th>核對狀態</th><th>核對人員／時間</th></tr></thead>
+          <table style="min-width:946px;table-layout:fixed;">
+            <thead><tr><th style="width:36px;"><input type="checkbox" id="chk-all-c4" title="全選"/></th><th style="width:120px;">藥品台大碼</th><th style="width:80px;">庫存碼</th><th style="width:110px;text-align:right;">斗六開方<br>→虎尾領</th><th style="width:110px;text-align:right;">虎尾開方<br>→斗六領</th><th style="width:250px;">轉帳方向／數量</th><th style="width:90px;">核對狀態</th><th style="width:150px;">核對人員／時間</th></tr></thead>
             <tbody id="vtb-c4"></tbody>
           </table>
         </div>
@@ -1192,6 +1192,33 @@ function dirHtml(n){
   var bg=toDl?"#FFEDD5":"#DBEAFE",fg=toDl?"#9A3412":"#1E40AF";
   return '<span style="display:inline-block;background:'+bg+';color:'+fg+';font-weight:700;font-size:14px;padding:3px 10px;border-radius:6px;">'+from+' ➜ '+to+'</span> <span style="font-size:17px;font-weight:700;">轉 '+q+'</span>';
 }
+// 依「藥站 → 轉帳方向」分組；rows 內以 \u0001g|d 標記每個區塊（d: 1=虎尾轉斗六, 2=斗六轉虎尾, 3=持平）
+function stnDirRow(g,d,span){
+  var pt=g.indexOf("／")>0?g.split("／"):["",""];
+  var dlc=pt[0]||"斗六",hwc=pt[1]||"虎尾";
+  var t=d===1?hwc+" ➜ "+dlc+"　（虎尾轉斗六）":d===2?dlc+" ➜ "+hwc+"　（斗六轉虎尾）":"其他";
+  var bg=d===1?"#FFEDD5":d===2?"#DBEAFE":"#F3F4F6",fg=d===1?"#9A3412":d===2?"#1E40AF":"#4B5563";
+  if(d===3) t="持平（不需轉帳）";
+  return "<tr><td></td><td colspan='"+(span-1)+"' style='background:"+bg+";color:"+fg+";font-weight:700;font-size:14px;padding:6px 10px;'>"+t+"</td></tr>";
+}
+function stnDirGroup(rows,cls,span){
+  var blocks=[],cur=null;
+  rows.forEach(function(h){
+    if(h.charAt(0)==="\u0001"){var p=h.slice(1).split("|");cur={g:p[0],d:+p[1],ix:blocks.length,h:[]};blocks.push(cur);}
+    else if(cur) cur.h.push(h);
+  });
+  blocks.sort(function(a,b){var x=stnSort(a.g,b.g);if(x!==0)return x;if(a.d!==b.d)return a.d-b.d;return a.ix-b.ix;});
+  var out=[],lg=null,ld=null;
+  blocks.forEach(function(b){
+    if(b.g!==lg){out.push(stnHdrRow(b.g,cls,span));lg=b.g;ld=null;}
+    if(b.d!==ld){
+      out.push(stnDirRow(b.g,b.d,span));
+      ld=b.d;
+    }
+    out=out.concat(b.h);
+  });
+  return out;
+}
 function stnLabel(dl,hw){return (dl&&hw)?(dl+"／"+hw):"未設定";}
 function stnGi(label){return "g"+(label==="未設定"?"none":label.replace(/[^0-9]/g,""));}
 async function loadStationMap(force){
@@ -1505,10 +1532,10 @@ async function toggleVerify(panelId,tp){
     listG=listG.filter(function(i){return fvG==="all"||i._g===fvG;}).sort(function(a,b){var x=stnSort(a._g,b._g);return x!==0?x:(a.dc<b.dc?-1:a.dc>b.dc?1:0);});
     var lastGg=null;
     listG.forEach(function(i){
-      if((i.dl_unver>0||i.hw_unver>0||i.dl_ver>0||i.hw_ver>0)&&i._g!==lastGg){rows2.push(stnHdrRow(i._g,"vchk-g",8));lastGg=i._g;}
+      
       if(i.dl_unver>0||i.hw_unver>0){
         var u=i.dl_unver-i.hw_unver;
-        var uDir=u>0?"虎尾轉斗六":u<0?"斗六轉虎尾":"持平";
+        var uDir=u>0?"虎尾轉斗六":u<0?"斗六轉虎尾":"持平";rows2.push("\u0001"+i._g+"|"+(u>0?"1":u<0?"2":"3"));
         var idsAttr=i.unver_ids.join(",");
         var chk='<input type="checkbox" class="vchk-g" data-gi="'+stnGi(i._g)+'" data-ids="'+idsAttr+'" style="cursor:pointer;"/>';
         var vbtn=(CU.role==="warehouse"||CU.role==="admin")
@@ -1526,7 +1553,7 @@ async function toggleVerify(panelId,tp){
       }
       if(i.dl_ver>0||i.hw_ver>0){
         var v=i.dl_ver-i.hw_ver;
-        var vDir=v>0?"虎尾轉斗六":v<0?"斗六轉虎尾":"持平";
+        var vDir=v>0?"虎尾轉斗六":v<0?"斗六轉虎尾":"持平";rows2.push("\u0001"+i._g+"|"+(v>0?"1":v<0?"2":"3"));
         var safeId="vdet_"+i.dc.replace(/[^a-zA-Z0-9]/g,"_");
         rows2.push("<tr style='cursor:pointer;' onclick=\"var els=document.querySelectorAll('."+safeId+"');var show=els[0]&&els[0].style.display==='none';els.forEach(function(e){e.style.display=show?'':'none';});this.querySelector('.expand-arrow').textContent=show?'▼':'▶';\">"
           +"<td></td>"
@@ -1542,21 +1569,12 @@ async function toggleVerify(panelId,tp){
           var vName=nameMap2[r.vby]||r.vby;
           var dispTime=r.dat?new Date(r.dat).toLocaleDateString("zh-TW",{timeZone:"Asia/Taipei"})+" "+new Date(r.dat).toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit",timeZone:"Asia/Taipei"}):"";
           var vTime=r.vat?new Date(r.vat).toLocaleDateString("zh-TW",{timeZone:"Asia/Taipei"})+" "+new Date(r.vat).toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit",timeZone:"Asia/Taipei"}):"";
-          rows2.push("<tr class='"+safeId+"' style='display:none;background:#F0FDF4;'>"
-            +"<td></td>"
-            +"<td class='mn' style='font-size:11px;color:#6b7280;padding-left:16px;'>└</td>"
-            +"<td class='mn' style='font-size:11px;'>"+shortDispNo(r.dn)+"</td>"
-            +"<td style='font-size:11px;color:#374151;'>代號 <span class='mn'>"+r.pid+"</span></td>"
-            +"<td colspan='1' style='font-size:11px;text-align:right;'>×"+r.qty+" "+r.unit+" "+pDir+"</td>"
-            +"<td style='font-size:11px;color:#6b7280;white-space:nowrap;'>刷碼 "+dispTime+"</td>"
-            +"<td style='font-size:11px;color:#059669;white-space:nowrap;'>"+vName+"</td>"
-            +"<td style='font-size:11px;color:#6b7280;white-space:nowrap;'>核對 "+vTime+"</td>"
-            +"</tr>");
+          rows2.push("<tr class='"+safeId+"' style='display:none;background:#F0FDF4;'><td></td><td colspan='7' style='font-size:12px;color:#374151;padding:5px 8px 5px 18px;'>└ 領藥號 <span class='mn'>"+shortDispNo(r.dn)+"</span>　代號 <span class='mn'>"+r.pid+"</span>　<strong>×"+r.qty+" "+r.unit+"</strong>　"+pDir+"　<span style='color:#6b7280;'>刷碼 "+dispTime+"</span>"+(vName?"　<span style='color:#059669;'>核對 "+vName+" "+vTime+"</span>":"")+"</td></tr>");
         });
       }
     });
     if(!rows2.length) rows2.push('<tr><td colspan="8" style="text-align:center;padding:12px;color:#9ca3af;">查無資料</td></tr>');
-    tb.innerHTML=rows2.join("");
+    tb.innerHTML=stnDirGroup(rows2,"vchk-g",8).join("");
     var chkAllG=g("chk-all-g");
     if(chkAllG) chkAllG.onchange=function(){document.querySelectorAll(".vchk-g").forEach(function(c){c.checked=chkAllG.checked;});};
   } else if(tp==="c4"){
@@ -1592,10 +1610,10 @@ async function toggleVerify(panelId,tp){
     list4=list4.filter(function(i){return fv4==="all"||i._g===fv4;}).sort(function(a,b){var x=stnSort(a._g,b._g);return x!==0?x:(a.dc<b.dc?-1:a.dc>b.dc?1:0);});
     var last4=null;
     list4.forEach(function(i){
-      if((i.dl_unver>0||i.hw_unver>0||i.dl_ver>0||i.hw_ver>0)&&i._g!==last4){rows4.push(stnHdrRow(i._g,"vchk-c4",8));last4=i._g;}
+      
       if(i.dl_unver>0||i.hw_unver>0){
         var u=i.dl_unver-i.hw_unver;
-        var uDir=u>0?"虎尾轉斗六":u<0?"斗六轉虎尾":"持平";
+        var uDir=u>0?"虎尾轉斗六":u<0?"斗六轉虎尾":"持平";rows4.push("\u0001"+i._g+"|"+(u>0?"1":u<0?"2":"3"));
         var idsAttr=i.unver_ids.join(",");
         var chk='<input type="checkbox" class="vchk-c4" data-gi="'+stnGi(i._g)+'" data-ids="'+idsAttr+'" style="cursor:pointer;"/>';
         var vbtn=(CU.role==="warehouse"||CU.role==="admin")
@@ -1610,7 +1628,7 @@ async function toggleVerify(panelId,tp){
       }
       if(i.dl_ver>0||i.hw_ver>0){
         var v=i.dl_ver-i.hw_ver;
-        var vDir=v>0?"虎尾轉斗六":v<0?"斗六轉虎尾":"持平";
+        var vDir=v>0?"虎尾轉斗六":v<0?"斗六轉虎尾":"持平";rows4.push("\u0001"+i._g+"|"+(v>0?"1":v<0?"2":"3"));
         var safeId="vdet4_"+i.dc.replace(/[^a-zA-Z0-9]/g,"_");
         rows4.push("<tr style='cursor:pointer;' onclick=\"var els=document.querySelectorAll('."+safeId+"');var show=els[0]&&els[0].style.display==='none';els.forEach(function(e){e.style.display=show?'':'none';});this.querySelector('.expand-arrow').textContent=show?'▼':'▶';\">"
           +"<td></td><td class='mn'>"+i.dc+"</td><td class='mn'>"+i.sc+"</td>"
@@ -1624,20 +1642,12 @@ async function toggleVerify(panelId,tp){
           var vName=nameMap4[r.vby]||r.vby;
           var dispTime=r.dat?new Date(r.dat).toLocaleDateString("zh-TW",{timeZone:"Asia/Taipei"})+" "+new Date(r.dat).toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit",timeZone:"Asia/Taipei"}):"";
           var vTime=r.vat?new Date(r.vat).toLocaleDateString("zh-TW",{timeZone:"Asia/Taipei"})+" "+new Date(r.vat).toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit",timeZone:"Asia/Taipei"}):"";
-          rows4.push("<tr class='"+safeId+"' style='display:none;background:#F0FDF4;'>"
-            +"<td></td><td class='mn' style='font-size:11px;color:#6b7280;padding-left:16px;'>└</td>"
-            +"<td class='mn' style='font-size:11px;'>"+shortDispNo(r.dn)+"</td>"
-            +"<td style='font-size:11px;color:#374151;'>代號 <span class='mn'>"+r.pid+"</span></td>"
-            +"<td colspan='1' style='font-size:11px;text-align:right;'>×"+r.qty+" "+r.unit+" "+pDir+"</td>"
-            +"<td style='font-size:11px;color:#6b7280;white-space:nowrap;'>刷碼 "+dispTime+"</td>"
-            +"<td style='font-size:11px;color:#059669;white-space:nowrap;'>"+vName+"</td>"
-            +"<td style='font-size:11px;color:#6b7280;white-space:nowrap;'>核對 "+vTime+"</td>"
-            +"</tr>");
+          rows4.push("<tr class='"+safeId+"' style='display:none;background:#F0FDF4;'><td></td><td colspan='7' style='font-size:12px;color:#374151;padding:5px 8px 5px 18px;'>└ 領藥號 <span class='mn'>"+shortDispNo(r.dn)+"</span>　代號 <span class='mn'>"+r.pid+"</span>　<strong>×"+r.qty+" "+r.unit+"</strong>　"+pDir+"　<span style='color:#6b7280;'>刷碼 "+dispTime+"</span>"+(vName?"　<span style='color:#059669;'>核對 "+vName+" "+vTime+"</span>":"")+"</td></tr>");
         });
       }
     });
     if(!rows4.length) rows4.push('<tr><td colspan="8" style="text-align:center;padding:12px;color:#9ca3af;">查無資料</td></tr>');
-    tb4.innerHTML=rows4.join("");
+    tb4.innerHTML=stnDirGroup(rows4,"vchk-c4",8).join("");
     var chkAll4=g("chk-all-c4");
     if(chkAll4) chkAll4.onchange=function(){document.querySelectorAll(".vchk-c4").forEach(function(c){c.checked=chkAll4.checked;});};
   } else {
@@ -1648,13 +1658,14 @@ async function toggleVerify(panelId,tp){
     var nameMap2=await buildNameMap(empIds2);
     var tpShort=tp==="c12"?"c1":"c3";
     var smapC=await loadStationMap();
-    var listC=rows.map(function(r,ix){r._g=stnOf(smapC,r.drug_code);r._ix=ix;return r;});
+    var listC=rows.map(function(r,ix){r._g=stnOf(smapC,r.drug_code);r._ix=ix;r._d=(r.prescribe_campus==="douliou"&&r.dispense_campus==="huwei")?1:(r.prescribe_campus==="huwei"&&r.dispense_campus==="douliou")?2:3;return r;});
     var fvC=stnFilterOpts("vst-"+tpShort,listC);
-    listC=listC.filter(function(r){return fvC==="all"||r._g===fvC;}).sort(function(a,b){var x=stnSort(a._g,b._g);return x!==0?x:(a._ix-b._ix);});
-    var lastGc=null;
+    listC=listC.filter(function(r){return fvC==="all"||r._g===fvC;}).sort(function(a,b){var x=stnSort(a._g,b._g);if(x!==0)return x;if(a._d!==b._d)return a._d-b._d;return a._ix-b._ix;});
+    var lastGc=null,lastDc=null;
     var htmlC=listC.map(function(r){
       var hdr="";
-      if(r._g!==lastGc){hdr=stnHdrRow(r._g,"vchk-"+tpShort,12);lastGc=r._g;}
+      if(r._g!==lastGc){hdr=stnHdrRow(r._g,"vchk-"+tpShort,12);lastGc=r._g;lastDc=null;}
+      if(r._d!==lastDc){hdr+=stnDirRow(r._g,r._d,12);lastDc=r._d;}
       return hdr+(function(r){
       var dt2=new Date(r.dispensed_at);
       var t='<div style="font-size:11px;">'+dt2.toLocaleDateString("zh-TW",{month:"2-digit",day:"2-digit",timeZone:"Asia/Taipei"})+'</div><div style="font-size:10px;color:#6b7280;">'+dt2.toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit",timeZone:"Asia/Taipei"})+'</div>';
