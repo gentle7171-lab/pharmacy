@@ -2210,17 +2210,27 @@ async function impStationFile(){
         var hi2=-1;
         for(var i=0;i<rows.length;i++){
           var rs=rows[i].map(function(x){return String(x||"").trim();});
-          if(rs.indexOf("藥品台大碼")>=0&&(rs.indexOf("斗六藥站")>=0||rs.indexOf("虎尾藥站")>=0||rs.indexOf("藥站")>=0)){hi2=i;break;}
+          if(rs.indexOf("藥品台大碼")>=0&&(rs.indexOf("站別")>=0||rs.indexOf("斗六藥站")>=0||rs.indexOf("虎尾藥站")>=0||rs.indexOf("藥站")>=0)){hi2=i;break;}
         }
-        if(hi2===-1){st.textContent="找不到標題行（需含「藥品台大碼」，以及「斗六藥站」「虎尾藥站」或「藥站」欄）";st.style.color="#dc2626";return;}
+        if(hi2===-1){st.textContent="找不到標題行（需含「藥品台大碼」，以及「站別」「斗六藥站」「虎尾藥站」或「藥站」欄）";st.style.color="#dc2626";return;}
         var h=rows[hi2].map(function(x){return String(x||"").trim();});
-        var iD=h.indexOf("藥品台大碼"),iL=h.indexOf("斗六藥站"),iH=h.indexOf("虎尾藥站"),iA=h.indexOf("藥站");
+        var iD=h.indexOf("藥品台大碼"),iL=h.indexOf("斗六藥站"),iH=h.indexOf("虎尾藥站"),iA=h.indexOf("藥站"),iS=h.indexOf("站別");
+        var clean=function(x){return String(x==null?"":x).trim().replace(/^="?/,"").replace(/"$/,"").trim();};
+        var stnRows={},other=0;
         var map=await loadStationMap(true);
         if(!STN.supported){st.textContent="資料庫尚未建立藥站欄位，請先在 Supabase 執行新增欄位的 SQL。";st.style.color="#dc2626";return;}
         var items=[],unmatched=[],invalid=[],blank=0,seen={};
         for(var j=hi2+1;j<rows.length;j++){
-          var r=rows[j],dc=String(r[iD]||"").trim();
+          var r=rows[j],dc=clean(r[iD]);
           if(!dc||dc==="藥品台大碼") continue;
+          if(iS>=0&&iL<0&&iH<0&&iA<0){ // 系統匯出格式：一列一個站別，同藥品可有 61xx 與 62xx 兩列
+            var tk=stnTok(clean(r[iS]));
+            if(!tk) continue;
+            if(tk.pre!=="61"&&tk.pre!=="62"){other++;continue;}
+            var o=stnRows[dc]||(stnRows[dc]={});
+            if(tk.pre==="61") o.dl=tk.pre+tk.sfx; else o.hw=tk.pre+tk.sfx;
+            continue;
+          }
           var res=resolveStations(iL>=0?r[iL]:"",iH>=0?r[iH]:"",iA>=0?r[iA]:"");
           if(res===null){blank++;continue;}
           if(res.err){invalid.push(dc+"（"+res.err+"）");continue;}
@@ -2230,10 +2240,18 @@ async function impStationFile(){
           items=items.filter(function(x){return x.dc!==dc;});
           items.push({dc:dc,dl:res.dl,hw:res.hw});
         }
+        Object.keys(stnRows).forEach(function(dc){
+          var o=stnRows[dc];
+          var res=resolveStations(o.dl||"",o.hw||"","");
+          if(!res||res.err){invalid.push(dc+"（"+(res?res.err:"空白")+"）");return;}
+          if(!map[dc]){unmatched.push(dc);return;}
+          items.push({dc:dc,dl:res.dl,hw:res.hw});
+        });
+        if(other) blank+=other;
         st.textContent="";
         var list=function(a){return a.slice(0,10).join("、")+(a.length>10?" …等 "+a.length+" 筆":"");};
         var html="將更新 <strong>"+items.length+"</strong> 筆藥品的藥站。"
-          +"<div style='margin-top:6px;color:#6b7280;font-size:13px;'>空白略過 "+blank+" 筆。</div>"
+          +"<div style='margin-top:6px;color:#6b7280;font-size:13px;'>空白或非 61／62 站別略過 "+blank+" 筆。</div>"
           +(unmatched.length?"<div style='margin-top:8px;color:#b45309;'>找不到的台大碼（不會新增）："+unmatched.length+" 筆<br><span class='mn' style='font-size:12px;'>"+list(unmatched)+"</span></div>":"")
           +(invalid.length?"<div style='margin-top:8px;color:#dc2626;'>格式有問題：<br><span class='mn' style='font-size:12px;'>"+list(invalid)+"</span></div>":"");
         if(!items.length){stnConfirm("匯入藥站",html+"<div style='margin-top:8px;'>沒有可更新的資料。</div>",null,"關閉");return;}
