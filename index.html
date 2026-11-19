@@ -161,27 +161,30 @@ tr:hover td{background:#fafafa;}
 
       <!-- Emergency confirm（彈出視窗：開方院區 → 領藥院區，由藥師按確認） -->
       <div class="modal-bg hide" id="emg-card">
-        <div class="modal" style="max-width:440px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-            <div style="font-size:18px;font-weight:700;">急診處方－請確認院區</div>
-            <span class="bdg bc1">E字頭</span>
+        <div class="modal" style="max-width:460px;padding:24px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <div style="font-size:20px;font-weight:700;">急診處方</div>
+            <span class="bdg bc1" style="font-size:14px;padding:3px 12px;">E字頭</span>
           </div>
-          <div class="al ad" style="margin-bottom:14px;">請確認以下<strong>開方院區</strong>與<strong>領藥院區</strong>是否正確，確認後才會儲存。</div>
-          <div style="font-size:16px;margin-bottom:14px;">
-            <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f3f4f6;"><span style="color:#6b7280;">代號</span><span class="mn" id="e-pid"></span></div>
-            <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f3f4f6;"><span style="color:#6b7280;">領藥號</span><span class="mn" id="e-dn"></span></div>
-            <div style="display:flex;justify-content:space-between;padding:6px 0;"><span style="color:#6b7280;">藥品</span><span style="font-weight:600;" id="e-nm"></span></div>
+          <div style="font-size:15px;color:#6b7280;margin-bottom:18px;">請確認開方院區與領藥院區是否正確</div>
+
+          <div class="cg" style="grid-template-columns:1fr 28px 1fr;gap:8px;margin-bottom:20px;">
+            <div class="cb emg" style="padding:14px 6px;"><div class="cbl e" style="font-size:14px;margin-bottom:6px;">開方院區</div><div id="e-ps-t" style="font-size:24px;font-weight:700;"></div></div>
+            <div style="text-align:center;color:#9ca3af;font-size:26px;">→</div>
+            <div class="cb emg" style="padding:14px 6px;"><div class="cbl e" style="font-size:14px;margin-bottom:6px;">領藥院區</div><div id="e-ds-t" style="font-size:24px;font-weight:700;"></div></div>
           </div>
-          <div class="cg">
-            <div class="cb emg"><div class="cbl e">開方院區</div><div id="e-ps-t" style="font-size:20px;font-weight:700;"></div></div>
-            <div style="text-align:center;color:#9ca3af;font-size:20px;">→</div>
-            <div class="cb emg"><div class="cbl e">領藥院區</div><div id="e-ds-t" style="font-size:20px;font-weight:700;"></div></div>
+
+          <div style="font-size:16px;margin-bottom:22px;border-top:1px solid #f3f4f6;">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 2px;border-bottom:1px solid #f3f4f6;"><span style="color:#6b7280;">代號</span><span class="mn" style="font-size:17px;font-weight:600;" id="e-pid"></span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 2px;border-bottom:1px solid #f3f4f6;"><span style="color:#6b7280;">領藥號</span><span class="mn" style="font-size:17px;font-weight:600;" id="e-dn"></span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 2px;"><span style="color:#6b7280;">庫存碼</span><span class="mn" style="font-size:17px;font-weight:600;" id="e-nm"></span></div>
           </div>
+
           <select id="e-ps" style="display:none;"><option value="douliou">斗六院區</option><option value="huwei">虎尾院區</option></select>
           <select id="e-ds" style="display:none;"><option value="douliou">斗六院區</option><option value="huwei">虎尾院區</option></select>
-          <div style="display:flex;gap:8px;">
-            <button class="btn bp" style="flex:1;padding:10px;" id="e-cfm">確認</button>
-            <button class="btn" style="flex:1;padding:10px;" id="e-cancel">取消</button>
+          <div style="display:flex;gap:10px;">
+            <button class="btn bp" style="flex:1;padding:13px;font-size:17px;font-weight:600;" id="e-cfm">確認</button>
+            <button class="btn" style="flex:1;padding:13px;font-size:17px;" id="e-cancel">取消</button>
           </div>
         </div>
       </div>
@@ -903,7 +906,7 @@ async function procBar(raw){
     var drug=Array.isArray(dr)&&dr.length?dr[0]:null;
     PQ=qr; PD=drug;
     g("e-pid").textContent=pidS(qr.pi); g("e-dn").textContent=qr.dn;
-    g("e-nm").textContent=drug?tc(drug.name):qr.dc+"（主檔待更新）";
+    g("e-nm").textContent=drug?(drug.stock_code||""):"主檔待更新";
     var oth=CU.campus==="douliou"?"huwei":"douliou";
     g("e-ps").value=oth; g("e-ds").value=CU.campus;
     g("e-ps-t").textContent=(oth==="douliou"?"斗六院區":"虎尾院區"); g("e-ds-t").textContent=(CU.campus==="douliou"?"斗六院區":"虎尾院區");
