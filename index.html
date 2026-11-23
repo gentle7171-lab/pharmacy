@@ -919,6 +919,12 @@ function getRxDateTime(){
 async function procBar(raw){
   if(LK||!raw) return;
   if(IME_RE.test(raw)){showImeWarn();return;}
+  // 中文輸入法刷出的亂碼（轉成符號／英文混雜）：欄位含非預期字元或數量非數字 → 擋下，不寫入暫存
+  var _p=raw.split("|");
+  if(_p.length>=7){
+    var _qt=(_p[5]||"").trim();
+    if(!/^[A-Za-z0-9 .\-\/_]+$/.test((_p[4]||"").trim())||!/^[A-Za-z0-9]+$/.test((_p[2]||"").trim())||!/^[A-Za-z0-9.\-\/_]+$/.test((_p[3]||"").trim())||!/^\d+(\.\d+)?$/.test(_qt)||parseFloat(_qt)<=0){showImeWarn();return;}
+  }
   LK=true; g("bi").value=""; sh("bp2");
   hi("emg-card"); hi("unk-card");
 
