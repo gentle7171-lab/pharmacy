@@ -574,7 +574,7 @@ tr:hover td{background:#fafafa;}
 <div id="campus-modal" class="modal-bg hide" style="z-index:200;">
   <div class="modal" style="max-width:460px;text-align:center;">
     <div style="font-size:40px;line-height:1;margin-bottom:8px;">⚠️</div>
-    <h3 style="font-size:20px;margin-bottom:10px;color:#dc2626;">無法判斷院區</h3>
+    <h3 id="campus-title" style="font-size:20px;margin-bottom:10px;color:#dc2626;">無法判斷院區</h3>
     <div id="campus-msg"></div>
     <button class="btn bp" style="width:100%;padding:12px;font-size:17px;margin-top:6px;" id="campus-ok">我知道了</button>
   </div>
@@ -977,10 +977,21 @@ async function procBar(raw){
   var qr={pa:pts[0].trim(),pi:pts[2].trim(),dn:pts[3].trim(),dc:pts[4].trim(),qt:parseInt(pts[5])||0,qu:pts[6].trim()};
 
   var pf0=(qr.dn||"").toUpperCase().trim()[0]||"";
-  if("APDGUE".indexOf(pf0)<0||!pf0){
+  var rxCamp=(pf0==="A"||pf0==="P")?"douliou":(pf0==="D"||pf0==="G"||pf0==="U")?"huwei":"";
+  var bad1=(!pf0||"APDGUE".indexOf(pf0)<0);
+  var bad2=(rxCamp&&rxCamp===CU.campus); // 刷到本院區處方
+  if(bad1||bad2){
     hi("bp2");
     var dk=await sel("drugs","drug_code=eq."+encodeURIComponent(qr.dc)+"&select=stock_code");
-    g("campus-msg").innerHTML='<div style="margin:0 0 14px;padding:10px 14px;background:#f3f4f6;border-radius:8px;text-align:left;font-size:16px;line-height:1.9;">領藥號：<strong class="mn">'+esc2(qr.dn)+'</strong><br>庫存碼：<strong class="mn">'+esc2(Array.isArray(dk)&&dk[0]?dk[0].stock_code:"主檔待更新")+'</strong><br>數量：<strong>'+esc2(qr.qt+" "+qr.qu)+'</strong></div><p style="font-size:16px;color:#374151;line-height:1.7;margin-bottom:14px;">領藥號開頭「'+esc2(pf0||"空白")+'」尚未設定院區，這筆資料<strong>未儲存</strong>。<br>請告知管理員處理。</p>';
+    var box='<div style="margin:0 0 14px;padding:10px 14px;background:#f3f4f6;border-radius:8px;text-align:left;font-size:16px;line-height:1.9;">領藥號：<strong class="mn">'+esc2(qr.dn)+'</strong><br>庫存碼：<strong class="mn">'+esc2(Array.isArray(dk)&&dk[0]?dk[0].stock_code:"主檔待更新")+'</strong><br>數量：<strong>'+esc2(qr.qt+" "+qr.qu)+'</strong></div>';
+    var cn={douliou:"斗六",huwei:"虎尾"};
+    if(bad1){
+      g("campus-title").textContent="無法判斷院區";
+      g("campus-msg").innerHTML=box+'<p style="font-size:16px;color:#374151;line-height:1.7;margin-bottom:14px;">領藥號開頭「'+esc2(pf0||"空白")+'」尚未設定院區，這筆資料<strong>未儲存</strong>。<br>請告知管理員處理。</p>';
+    } else {
+      g("campus-title").textContent="這是本院區的處方";
+      g("campus-msg").innerHTML=box+'<p style="font-size:16px;color:#374151;line-height:1.7;margin-bottom:14px;">領藥號開頭「'+esc2(pf0)+'」是<strong>'+cn[rxCamp]+'</strong>處方，您目前登入的是<strong>'+cn[CU.campus]+'</strong>，這筆資料<strong>未儲存</strong>。<br>可能是誤刷，或您的帳號院區設定有誤，請告知管理員確認。</p>';
+    }
     sh("campus-modal");LK=false;g("bi").value="";return;
   }
   var dupRec=await findDup(qr);
