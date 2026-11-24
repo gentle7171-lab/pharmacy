@@ -571,6 +571,14 @@ tr:hover td{background:#fafafa;}
     <button class="btn bp" style="width:100%;padding:12px;font-size:17px;" id="ime-ok">我知道了，重刷</button>
   </div>
 </div>
+<div id="campus-modal" class="modal-bg hide" style="z-index:200;">
+  <div class="modal" style="max-width:460px;text-align:center;">
+    <div style="font-size:40px;line-height:1;margin-bottom:8px;">⚠️</div>
+    <h3 style="font-size:20px;margin-bottom:10px;color:#dc2626;">無法判斷院區</h3>
+    <div id="campus-msg"></div>
+    <button class="btn bp" style="width:100%;padding:12px;font-size:17px;margin-top:6px;" id="campus-ok">我知道了</button>
+  </div>
+</div>
 <div id="dup-modal" class="modal-bg hide" style="z-index:200;">
   <div class="modal" style="max-width:460px;text-align:center;">
     <div style="font-size:40px;line-height:1;margin-bottom:8px;">⚠️</div>
@@ -698,6 +706,7 @@ function showImeWarn(){
   g("bi").value="";
   if(g("ime-modal").classList.contains("hide")) sh("ime-modal");
 }
+g("campus-ok").onclick=function(){hi("campus-modal");g("bi").value="";g("bi").focus();};
 g("ime-ok").onclick=function(){hi("ime-modal");g("bi").value="";g("bi").focus();};
 g("bi").addEventListener("compositionstart",showImeWarn);
 g("bi").addEventListener("compositionend",function(){g("bi").value="";});
@@ -967,6 +976,13 @@ async function procBar(raw){
   if(pts.length<7){LK=false;hi("bp2");showToast("條碼格式不符","err");return;}
   var qr={pa:pts[0].trim(),pi:pts[2].trim(),dn:pts[3].trim(),dc:pts[4].trim(),qt:parseInt(pts[5])||0,qu:pts[6].trim()};
 
+  var pf0=(qr.dn||"").toUpperCase().trim()[0]||"";
+  if("APDGUE".indexOf(pf0)<0||!pf0){
+    hi("bp2");
+    var dk=await sel("drugs","drug_code=eq."+encodeURIComponent(qr.dc)+"&select=stock_code");
+    g("campus-msg").innerHTML='<div style="margin:0 0 14px;padding:10px 14px;background:#f3f4f6;border-radius:8px;text-align:left;font-size:16px;line-height:1.9;">領藥號：<strong class="mn">'+esc2(qr.dn)+'</strong><br>庫存碼：<strong class="mn">'+esc2(Array.isArray(dk)&&dk[0]?dk[0].stock_code:"主檔待更新")+'</strong><br>數量：<strong>'+esc2(qr.qt+" "+qr.qu)+'</strong></div><p style="font-size:16px;color:#374151;line-height:1.7;margin-bottom:14px;">領藥號開頭「'+esc2(pf0||"空白")+'」尚未設定院區，這筆資料<strong>未儲存</strong>。<br>請告知管理員處理。</p>';
+    sh("campus-modal");LK=false;g("bi").value="";return;
+  }
   var dupRec=await findDup(qr);
   if(dupRec){
     hi("bp2");
