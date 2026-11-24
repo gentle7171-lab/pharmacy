@@ -931,7 +931,11 @@ function getRxDateTime(){
 async function findDup(qr){
   var q="patient_id=eq."+encodeURIComponent(pidS(qr.pi))+"&dispense_no=eq."+encodeURIComponent(qr.dn)+"&drug_code=eq."+encodeURIComponent(qr.dc)+"&quantity=eq."+encodeURIComponent(qr.qt)+"&qr_unit=eq."+encodeURIComponent(qr.qu)+"&order=dispensed_at.desc&limit=1&select=dispensed_at,pharmacist_emp_id";
   var d=await sel("dispensing_records",q);
-  return Array.isArray(d)&&d.length?d[0]:null;
+  if(Array.isArray(d)&&d.length) return d[0];
+  // 主檔找不到的藥會先進暫存紀錄，也要一併比對
+  var q2=q.replace("order=dispensed_at.desc","order=created_at.desc").replace("select=dispensed_at,pharmacist_emp_id","select=created_at,pharmacist_emp_id");
+  var d2=await sel("pending_records",q2);
+  return Array.isArray(d2)&&d2.length?{dispensed_at:d2[0].created_at,pharmacist_emp_id:d2[0].pharmacist_emp_id}:null;
 }
 function askDup(rec){
   return new Promise(function(res){
