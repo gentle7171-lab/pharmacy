@@ -894,18 +894,20 @@ function tab(t){
   Object.values(map).forEach(function(v){hi(v);});
   ["ns","nr","np","na","nd"].forEach(function(b){g(b).classList.remove("on");});
   sh(map[t]); g("n"+t).classList.add("on");
-  if(t==="r"&&!g("rd").value){var td=new Date().toISOString().slice(0,10);g("rd").value=td;g("rd2").value=td;}
-  if(t==="p"){var td=new Date().toISOString().slice(0,10);if(!g("pd").value)g("pd").value=td;if(!g("pd2").value)g("pd2").value=td;if(CU&&(CU.role==="warehouse"||CU.role==="admin"))checkCtrlDrugs();}
+  if(t==="r"){if(!g("rd").value){var td=twToday();g("rd").value=td;g("rd2").value=td;}loadRec();}
+  if(t==="p"){var td=twToday();if(!g("pd").value)g("pd").value=td;if(!g("pd2").value)g("pd2").value=td;if(CU&&(CU.role==="warehouse"||CU.role==="admin"))checkCtrlDrugs();
+    [["verify-panel","g"],["verify-panel-c4","c4"],["verify-panel-c1","c12"],["verify-panel-c3","c3"]].forEach(function(x){if(g(x[0])&&!g(x[0]).classList.contains("hide")){hi(x[0]);toggleVerify(x[0],x[1]);}});}
   if(t==="a"){loadUsers();checkRosterDiff();if(CU&&CU.role==="admin")openRosterSyncModal(true);}
   if(t==="d"){searchDrugMaster(false);loadPending();}
   if(t==="s"){
+    if(CU){loadCounts();loadRecent();}
     setTimeout(function(){g("bi").focus();},100);
   }
 }
 
 function checkRxDate(){
   var rxd=g("rx-date").value;
-  var today=new Date().toISOString().slice(0,10);
+  var today=twToday();
   var warn=g("rx-date-warn");
   var card=g("rx-date-card");
   if(rxd&&rxd!==today){
@@ -922,7 +924,7 @@ function checkRxDate(){
 
 // 取得開方時間（開方日期 + 當下時間）
 function getRxDateTime(){
-  var rxd=g("rx-date").value||new Date().toISOString().slice(0,10);
+  var rxd=g("rx-date").value||twToday();
   var now=new Date();
   // 組合開方日期 + 現在時間
   return rxd+"T"+now.toTimeString().slice(0,8);
@@ -1013,7 +1015,7 @@ async function procBar(raw){
     g("cd-pid").textContent=pidS(qr.pi);
     g("cd-dn").textContent=qr.dn;
     g("cd-nm").textContent=tc(drug.name);
-    g("cd-date").value=new Date().toISOString().slice(0,10);
+    g("cd-date").value=twToday();
     var lvl=String(cl);
     var badge=g("ctrl-date-level-badge");
     badge.textContent="管"+lvl+"級";
@@ -1058,7 +1060,7 @@ async function saveEmgRecord(){
     g("cd-pid").textContent=pidS(PQ.pi);
     g("cd-dn").textContent=PQ.dn;
     g("cd-nm").textContent=tc(PD.name);
-    g("cd-date").value=new Date().toISOString().slice(0,10);
+    g("cd-date").value=twToday();
     var lvl=String(cl);
     var badge=g("ctrl-date-level-badge");
     badge.textContent="管"+lvl+"級";
@@ -1071,7 +1073,7 @@ async function saveEmgRecord(){
 }
 
 async function saveRecord(qr,drug,pc,dc,rxDate){
-  var today=new Date().toISOString().slice(0,10);
+  var today=twToday();
   var finalRxDate=rxDate||today;
   var r=await ins("dispensing_records",{patient_id:pidS(qr.pi),dispense_no:qr.dn,drug_code:qr.dc,quantity:qr.qt,qr_unit:qr.qu,stock_code:drug.stock_code,drug_name:drug.name,ctrl_level:drug.ctrl_level,drug_unit:drug.unit,prescribe_campus:pc,dispense_campus:dc,pharmacist_emp_id:CU.emp_id,prescription_date:finalRxDate,dispensed_at:new Date().toISOString()});
   if(r.error){showToast("儲存失敗","err");return;}
@@ -1123,7 +1125,7 @@ function showToast(msg,type){
 // ── Counts ────────────────────────────────────────────────
 async function loadCounts(){
   var td=new Date().toLocaleDateString("zh-TW",{timeZone:"Asia/Taipei"}).replace(/\//g,"-").replace(/(\d+)-(\d+)-(\d+)/,function(m,y,mo,d){return y+"-"+mo.padStart(2,"0")+"-"+d.padStart(2,"0");});
-  var d=new Date(),dy=d.getDay()||7; d.setDate(d.getDate()-dy+1); var ws=d.toISOString().slice(0,10);
+  var d=new Date(twToday()+"T00:00:00Z"),dy=d.getUTCDay()||7; d.setUTCDate(d.getUTCDate()-dy+1); var ws=d.toISOString().slice(0,10);
   var tc=await sel("dispensing_records","dispensed_at=gte."+twDateToUtc(td,false)+"&dispensed_at=lte."+twDateToUtc(td,true)+"&select=id",true);
   var wc=await sel("dispensing_records","dispensed_at=gte."+twDateToUtc(ws,false)+"&select=id",true);
   g("ct").textContent=tc; g("cw").textContent=wc;
@@ -1373,6 +1375,7 @@ function getRptDates(){
 }
 
 // 台灣時間(UTC+8)轉UTC查詢範圍
+function twToday(){return new Date(Date.now()+8*3600*1000).toISOString().slice(0,10);}
 function twDateToUtc(date,isEnd){
   // 台灣 yyyy-mm-dd 00:00 = UTC yyyy-mm-dd 前一天 16:00
   // 台灣 yyyy-mm-dd 23:59:59 = UTC yyyy-mm-dd 15:59:59
