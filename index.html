@@ -8,6 +8,7 @@
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:Arial,sans-serif;background:#F4F5F7;font-size:16px;color:#111;}
 .hide{display:none!important;}
+.wrapp{font-size:16px;color:#374151;line-height:1.7;margin:0 0 6px;text-wrap:balance;overflow-wrap:anywhere;}
 #hdr{background:#fff;border-bottom:1px solid #e5e7eb;height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;position:sticky;top:0;z-index:9;}
 .logo{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;}
 .logo-i{width:26px;height:26px;background:#185FA5;border-radius:6px;display:flex;align-items:center;justify-content:center;}
@@ -952,7 +953,7 @@ function askDup(rec,qr,stock,nm){
   return new Promise(function(res){
     var t=new Date(rec.dispensed_at).toLocaleString("zh-TW",{timeZone:"Asia/Taipei",year:"numeric",month:"2-digit",day:"2-digit",hour:"numeric",minute:"2-digit",hour12:true});
     var who=rec.pharmacist_emp_id?((nm?nm+"（"+rec.pharmacist_emp_id+"）":rec.pharmacist_emp_id)):"";
-    g("dup-msg").innerHTML='<div style="margin:0 0 14px;padding:10px 14px;background:#f3f4f6;border-radius:8px;text-align:left;font-size:16px;line-height:1.9;">領藥號：<strong class="mn">'+esc2(qr.dn)+'</strong><br>庫存碼：<strong class="mn">'+esc2(stock||"主檔待更新")+'</strong><br>數量：<strong>'+esc2(qr.qt+" "+qr.qu)+'</strong></div>已於 '+t+' 刷入相同資料，<br>是否要重複登錄？'+(who?'<div style="margin-top:12px;font-size:15px;color:#6b7280;">刷入藥師：'+esc2(who)+'</div>':"");
+    g("dup-msg").innerHTML='<div style="margin:0 0 14px;padding:10px 14px;background:#f3f4f6;border-radius:8px;text-align:left;font-size:16px;line-height:1.9;">領藥號：<strong class="mn">'+esc2(qr.dn)+'</strong><br>庫存碼：<strong class="mn">'+esc2(stock||"主檔待更新")+'</strong><br>數量：<strong>'+esc2(qr.qt+" "+qr.qu)+'</strong></div><p class="wrapp">已於 '+t+' 刷入相同資料。</p><p class="wrapp">是否要重複登錄？</p>'+(who?'<div style="margin-top:12px;font-size:15px;color:#6b7280;">刷入藥師：'+esc2(who)+'</div>':"");
     sh("dup-modal");
     function done(v){hi("dup-modal");g("dup-yes").onclick=null;g("dup-no").onclick=null;res(v);}
     g("dup-yes").onclick=function(){done(true);};
@@ -987,10 +988,10 @@ async function procBar(raw){
     var cn={douliou:"斗六",huwei:"虎尾"};
     if(bad1){
       g("campus-title").textContent="無法判斷院區";
-      g("campus-msg").innerHTML=box+'<p style="font-size:16px;color:#374151;line-height:1.7;margin-bottom:14px;">領藥號開頭「'+esc2(pf0||"空白")+'」尚未設定院區，這筆資料<strong>未儲存</strong>。<br>請告知管理員處理。</p>';
+      g("campus-msg").innerHTML=box+'<p class="wrapp">領藥號開頭「'+esc2(pf0||"空白")+'」尚未設定院區。</p><p class="wrapp">這筆資料<strong>未儲存</strong>，請告知管理員處理。</p>';
     } else {
       g("campus-title").textContent="這是本院區的處方";
-      g("campus-msg").innerHTML=box+'<p style="font-size:16px;color:#374151;line-height:1.7;margin-bottom:14px;">領藥號開頭「'+esc2(pf0)+'」是<strong>'+cn[rxCamp]+'</strong>處方，您目前登入的是<strong>'+cn[CU.campus]+'</strong>，這筆資料<strong>未儲存</strong>。<br>可能是誤刷，或您的帳號院區設定有誤，請告知管理員確認。</p>';
+      g("campus-msg").innerHTML=box+'<p class="wrapp">領藥號開頭「'+esc2(pf0)+'」是<strong>'+cn[rxCamp]+'</strong>處方。</p><p class="wrapp">您目前設定為<strong>'+cn[CU.campus]+'院區</strong>藥師。</p><p class="wrapp">這筆資料<strong>未儲存</strong>。</p><p class="wrapp">可能是誤刷，或帳號的院區設定有誤。</p><p class="wrapp">請告知管理員確認。</p>';
     }
     sh("campus-modal");LK=false;g("bi").value="";return;
   }
