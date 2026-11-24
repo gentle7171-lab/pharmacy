@@ -571,6 +571,17 @@ tr:hover td{background:#fafafa;}
     <button class="btn bp" style="width:100%;padding:12px;font-size:17px;" id="ime-ok">我知道了，重刷</button>
   </div>
 </div>
+<div id="dup-modal" class="modal-bg hide" style="z-index:200;">
+  <div class="modal" style="max-width:460px;text-align:center;">
+    <div style="font-size:40px;line-height:1;margin-bottom:8px;">⚠️</div>
+    <h3 style="font-size:20px;margin-bottom:10px;color:#dc2626;">這筆條碼已經刷過了</h3>
+    <p id="dup-msg" style="font-size:16px;color:#374151;line-height:1.7;margin-bottom:18px;"></p>
+    <div style="display:flex;gap:10px;">
+      <button class="btn" style="flex:1;padding:12px;font-size:16px;" id="dup-no">取消，不儲存</button>
+      <button class="btn bp" style="flex:1;padding:12px;font-size:16px;" id="dup-yes">仍要儲存</button>
+    </div>
+  </div>
+</div>
 <div id="stn-modal" class="modal-bg hide" style="z-index:150;">
   <div class="modal" style="max-width:460px;">
     <h3 id="stn-title">確認</h3>
@@ -916,6 +927,22 @@ function getRxDateTime(){
   // 組合開方日期 + 現在時間
   return rxd+"T"+now.toTimeString().slice(0,8);
 }
+// 重複刷碼檢查：整串條碼內容（病人代號、領藥號、台大碼、數量、單位）與歷史紀錄完全相同
+async function findDup(qr){
+  var q="patient_id=eq."+encodeURIComponent(pidS(qr.pi))+"&dispense_no=eq."+encodeURIComponent(qr.dn)+"&drug_code=eq."+encodeURIComponent(qr.dc)+"&quantity=eq."+encodeURIComponent(qr.qt)+"&qr_unit=eq."+encodeURIComponent(qr.qu)+"&order=dispensed_at.desc&limit=1&select=dispensed_at,pharmacist_emp_id";
+  var d=await sel("dispensing_records",q);
+  return Array.isArray(d)&&d.length?d[0]:null;
+}
+function askDup(rec){
+  return new Promise(function(res){
+    var t=new Date(rec.dispensed_at).toLocaleString("zh-TW",{timeZone:"Asia/Taipei"});
+    g("dup-msg").innerHTML="相同的條碼已在 <strong>"+t+"</strong> 刷過"+(rec.pharmacist_emp_id?"（"+rec.pharmacist_emp_id+"）":"")+"。<br>確定要再存一筆嗎？";
+    sh("dup-modal");
+    function done(v){hi("dup-modal");g("dup-yes").onclick=null;g("dup-no").onclick=null;res(v);}
+    g("dup-yes").onclick=function(){done(true);};
+    g("dup-no").onclick=function(){done(false);};
+  });
+}
 async function procBar(raw){
   if(LK||!raw) return;
   if(IME_RE.test(raw)){showImeWarn();return;}
@@ -931,6 +958,14 @@ async function procBar(raw){
   var pts=raw.split("|");
   if(pts.length<7){LK=false;hi("bp2");showToast("條碼格式不符","err");return;}
   var qr={pa:pts[0].trim(),pi:pts[2].trim(),dn:pts[3].trim(),dc:pts[4].trim(),qt:parseInt(pts[5])||0,qu:pts[6].trim()};
+
+  var dupRec=await findDup(qr);
+  if(dupRec){
+    hi("bp2");
+    var goOn=await askDup(dupRec);
+    if(!goOn){LK=false;g("bi").value="";g("bi").focus();return;}
+    sh("bp2");
+  }
 
   var prefix=(qr.dn||"").toUpperCase().trim()[0]||"";
   var isEmg=(prefix==="E");
