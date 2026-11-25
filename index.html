@@ -396,6 +396,17 @@ tr:hover td{background:#fafafa;}
           <button class="btn" style="font-size:12px;" onclick="openRosterSyncModal()">從名冊同步</button>
         </div>
       </div>
+      <!-- 院區代碼設定 -->
+      <div class="card" style="margin-bottom:12px;" id="pfx-card">
+        <div style="font-size:13px;font-weight:600;margin-bottom:6px;padding-bottom:8px;border-bottom:1px solid #e5e7eb;">院區代碼設定</div>
+        <div style="font-size:12px;color:#6b7280;margin-bottom:10px;">領藥號第一個英文字母對應的「開方院區」。E 為急診，固定處理，不在此設定。</div>
+        <table style="width:100%;max-width:420px;margin-bottom:10px;"><thead><tr><th style="text-align:left;">字頭</th><th style="text-align:left;">開方院區</th><th></th></tr></thead><tbody id="pfx-tb"></tbody></table>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+          <input class="inp" id="pfx-in" maxlength="1" placeholder="字母" style="width:70px;text-transform:uppercase;"/>
+          <select class="inp" id="pfx-cp" style="width:auto;"><option value="douliou">斗六</option><option value="huwei">虎尾</option></select>
+          <button class="btn bp" style="font-size:12px;" id="pfx-add">新增／更新</button>
+        </div>
+      </div>
       <!-- 區塊 2：批次匯入 -->
       <div class="card" style="margin-bottom:12px;">
         <div style="font-size:13px;font-weight:600;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #e5e7eb;">批次匯入</div>
@@ -665,6 +676,40 @@ async function upd(t,m,d){var r=await req(t+"?"+m,{o:{method:"PATCH",body:JSON.s
 async function del2(t,m){var r=await req(t+"?"+m,{o:{method:"DELETE"}});return r.ok;}
 
 var CU=null,PQ=null,PD=null,LK=false;
+// 領藥號字頭 → 開方院區（可在管理頁編輯，存於 campus_prefix；表不存在時用預設值）
+var PFX_DEF={A:"douliou",P:"douliou",F:"douliou",D:"huwei",G:"huwei",U:"huwei"};
+var PFX=Object.assign({},PFX_DEF);
+function pfxCamp(ch){return PFX[String(ch||"").toUpperCase()]||"";}
+async function loadPfx(){
+  var d=await sel("campus_prefix","select=prefix,campus");
+  if(Array.isArray(d)&&d.length){PFX={};d.forEach(function(r){PFX[String(r.prefix).toUpperCase()]=r.campus;});}
+  else PFX=Object.assign({},PFX_DEF);
+}
+function renderPfx(){
+  var tb=g("pfx-tb");if(!tb)return;
+  var ks=Object.keys(PFX).sort();
+  tb.innerHTML=ks.map(function(k){
+    return "<tr><td class='mn' style='font-size:16px;font-weight:700;'>"+k+"</td><td>"+(PFX[k]==="douliou"?"斗六":"虎尾")+"</td><td style='text-align:right;'><button class='btn' style='font-size:11px;padding:2px 7px;color:#dc2626;border-color:#fca5a5;' onclick=\"window._pfxDel('"+k+"')\">刪除</button></td></tr>";
+  }).join("")||"<tr><td colspan='3' style='text-align:center;color:#9ca3af;'>尚未設定</td></tr>";
+}
+// 資料庫是空的（尚未寫入預設）時，先把目前預設值寫進去，再進行新增／刪除
+async function pfxSeed(){
+  var d=await sel("campus_prefix","select=prefix");
+  if(!Array.isArray(d)) return false;
+  if(!d.length){
+    var rows=Object.keys(PFX).map(function(k){return {prefix:k,campus:PFX[k]};});
+    var r=await ups("campus_prefix",rows,"prefix");
+    if(r.error) return false;
+  }
+  return true;
+}
+window._pfxDel=async function(p){
+  if(!confirm("確定要刪除字頭「"+p+"」嗎？刪除後這個字頭刷碼時會被擋下（無法判斷院區）。"))return;
+  if(!await pfxSeed()){showToast("儲存失敗，請確認已執行 SQL 建立院區代碼表","err");return;}
+  var ok=await del2("campus_prefix","prefix=eq."+encodeURIComponent(p));
+  showToast(ok?"已刪除":"刪除失敗",ok?"ok":"err");
+  await loadPfx();renderPfx();
+};
 var CL={douliou:"斗六院區",huwei:"虎尾院區"};
 var ROLE_LABEL={pharmacist:"一般",warehouse:"藥庫",admin:"管理員"};
 
@@ -707,6 +752,17 @@ function showImeWarn(){
   g("bi").value="";
   if(g("ime-modal").classList.contains("hide")) sh("ime-modal");
 }
+g("pfx-add").onclick=async function(){
+  var p=g("pfx-in").value.trim().toUpperCase(),cp=g("pfx-cp").value;
+  if(!/^[A-Z]$/.test(p)){showToast("請輸入一個英文字母","err");return;}
+  if(p==="E"){showToast("E 為急診專用，不能設定","err");return;}
+  if(!await pfxSeed()){showToast("儲存失敗，請確認已執行 SQL 建立院區代碼表","err");return;}
+  var r=await ups("campus_prefix",[{prefix:p,campus:cp}],"prefix");
+  if(r.error){showToast("儲存失敗","err");return;}
+  showToast("已儲存："+p+" → "+(cp==="douliou"?"斗六":"虎尾"),"ok");
+  g("pfx-in").value="";
+  await loadPfx();renderPfx();
+};
 g("campus-ok").onclick=function(){hi("campus-modal");g("bi").value="";g("bi").focus();};
 g("ime-ok").onclick=function(){hi("ime-modal");g("bi").value="";g("bi").focus();};
 g("bi").addEventListener("compositionstart",showImeWarn);
@@ -870,6 +926,7 @@ async function login(){
   var u=d[0];
   if((u.password_hash||"").toLowerCase()!==pw){er.textContent="密碼錯誤";er.classList.remove("hide");return;}
   CU=u; hi("ls"); sh("as");
+  await loadPfx();
   if(u.role==="admin"){checkRosterDiff();}
 
   var cl=lc==="douliou"?"bdl":"bhw",lb=CL[lc];
@@ -907,7 +964,7 @@ function tab(t){
   if(t==="r"){if(!g("rd").value){var td=twToday();g("rd").value=td;g("rd2").value=td;}loadRec();}
   if(t==="p"){var td=twToday();if(!g("pd").value)g("pd").value=td;if(!g("pd2").value)g("pd2").value=td;if(CU&&(CU.role==="warehouse"||CU.role==="admin"))checkCtrlDrugs();
     [["verify-panel","g"],["verify-panel-c4","c4"],["verify-panel-c1","c12"],["verify-panel-c3","c3"]].forEach(function(x){if(g(x[0])&&!g(x[0]).classList.contains("hide")){hi(x[0]);toggleVerify(x[0],x[1]);}});}
-  if(t==="a"){loadUsers();checkRosterDiff();if(CU&&CU.role==="admin")openRosterSyncModal(true);}
+  if(t==="a"){loadPfx().then(renderPfx);loadUsers();checkRosterDiff();if(CU&&CU.role==="admin")openRosterSyncModal(true);}
   if(t==="d"){searchDrugMaster(false);loadPending();}
   if(t==="s"){
     if(CU){loadCounts();loadRecent();}
@@ -978,8 +1035,8 @@ async function procBar(raw){
   var qr={pa:pts[0].trim(),pi:pts[2].trim(),dn:pts[3].trim(),dc:pts[4].trim(),qt:parseInt(pts[5])||0,qu:pts[6].trim()};
 
   var pf0=(qr.dn||"").toUpperCase().trim()[0]||"";
-  var rxCamp=(pf0==="A"||pf0==="P")?"douliou":(pf0==="D"||pf0==="G"||pf0==="U")?"huwei":"";
-  var bad1=(!pf0||"APDGUE".indexOf(pf0)<0);
+  var rxCamp=pfxCamp(pf0);
+  var bad1=(!pf0||(pf0!=="E"&&!rxCamp));
   var bad2=(rxCamp&&rxCamp===CU.campus); // 刷到本院區處方
   if(bad1||bad2){
     hi("bp2");
@@ -1035,7 +1092,7 @@ async function procBar(raw){
   }
 
   PQ=qr; PD=drug;
-  var pc=(prefix==="A"||prefix==="P")?"douliou":(prefix==="D"||prefix==="G"||prefix==="U")?"huwei":(CU.campus==="douliou"?"huwei":"douliou");
+  var pc=pfxCamp(prefix)||(CU.campus==="douliou"?"huwei":"douliou");
 
   // 管制藥品（管一二三）→ 跳出開方日期選擇
   var cl=drug.ctrl_level;
@@ -1122,7 +1179,7 @@ async function autoConvertPending(){
     var drug=Array.isArray(dr)&&dr.length?dr[0]:null;
     if(!drug) continue;
     var px=(pr.dispense_no||"").toUpperCase()[0]||"";
-    var pc=(px==="A"||px==="P")?"douliou":(px==="D"||px==="G"||px==="U")?"huwei":pr.campus;
+    var pc=pfxCamp(px)||pr.campus;
     await ins("dispensing_records",{
       patient_id:pidS(pr.patient_id),
       dispense_no:pr.dispense_no||"",drug_code:pr.drug_code,quantity:pr.quantity,
@@ -2659,7 +2716,7 @@ async function confirmPending(pid,drugCode,patientId,qty){
       if(!Array.isArray(pr)||!pr.length) return;
       var r=pr[0];
       var px=(r.dispense_no||"").toUpperCase()[0]||"";
-      var pc=(px==="A"||px==="P")?"douliou":(px==="D"||px==="G"||px==="U")?"huwei":r.campus;
+      var pc=pfxCamp(px)||r.campus;
       await ins("dispensing_records",{
         patient_id:pidS(r.patient_id),dispense_no:r.dispense_no||"",
         drug_code:r.drug_code,quantity:r.quantity,qr_unit:r.qr_unit||"",
